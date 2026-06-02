@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python 인사 프로그램</title>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+    }
+
+    h1 {
+      color: #e2e8f0;
+      font-size: 1.6rem;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      font-size: 0.85rem;
+      margin-bottom: 36px;
+    }
+
+    label {
+      display: block;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.07);
+      color: #f1f5f9;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input::placeholder { color: #475569; }
+    input:focus { border-color: #60a5fa; }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    button:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    button:active:not(:disabled) { transform: translateY(0); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .output {
+      margin-top: 28px;
+      padding: 18px 20px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border-left: 3px solid #3b82f6;
+      color: #93c5fd;
+      font-size: 1.05rem;
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+    }
+
+    .status {
+      margin-top: 16px;
+      font-size: 0.78rem;
+      color: #64748b;
+      text-align: right;
+    }
+
+    .loading-dot::after {
+      content: '';
+      animation: dots 1.2s infinite;
+    }
+
+    @keyframes dots {
+      0%   { content: ''; }
+      33%  { content: '.'; }
+      66%  { content: '..'; }
+      100% { content: '...'; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Python 인사 프로그램</h1>
+    <p class="subtitle">Pyodide로 브라우저에서 Python 실행</p>
+
+    <label for="nameInput">이름</label>
+    <input id="nameInput" type="text" placeholder="이름을 입력하세요" />
+
+    <button id="runBtn" disabled>
+      <span class="loading-dot">Python 로딩 중</span>
+    </button>
+
+    <div class="output" id="output">결과가 여기에 표시됩니다.</div>
+    <div class="status" id="status">Pyodide 초기화 중...</div>
+  </div>
+
+  <script>
+    const btn = document.getElementById('runBtn');
+    const output = document.getElementById('output');
+    const status = document.getElementById('status');
+    const nameInput = document.getElementById('nameInput');
+
+    const pythonCode = `
+def greet(name: str) -> str:
+    return f"안녕하세요, {name}님! 반갑습니다."
+
+greet(user_name)
+`;
+
+    let pyodide = null;
+
+    async function loadPython() {
+      try {
+        pyodide = await loadPyodide();
+        btn.disabled = false;
+        btn.innerHTML = '인사하기 ▶';
+        status.textContent = 'Python 준비 완료';
+      } catch (e) {
+        status.textContent = '로드 실패: ' + e.message;
+      }
+    }
+
+    btn.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      if (!name) {
+        output.textContent = '이름을 입력해주세요.';
+        return;
+      }
+      try {
+        pyodide.globals.set('user_name', name);
+        const result = pyodide.runPython(pythonCode);
+        output.textContent = result;
+        status.textContent = '실행 완료';
+      } catch (e) {
+        output.textContent = '오류: ' + e.message;
+      }
+    });
+
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) btn.click();
+    });
+
+    loadPython();
+  </script>
+</body>
+</html>
