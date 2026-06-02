@@ -1,4 +1,6 @@
-# AI 투자 대시보드 — Claude 프로젝트 지침
+# AI 투자 대시보드 — 프로젝트지침
+
+> 커밋/푸시 규칙은 전역지침(`~/.claude/CLAUDE.md`)에서 관리합니다.
 
 ## 프로젝트 개요
 주식 종목 정리 및 자동매매를 목표로 하는 개인 투자 도구.
@@ -20,6 +22,7 @@ stock_test/
 ├── index.html         # Vite HTML 템플릿
 ├── vite.config.js     # base: '/stock_test/' 설정 필수
 ├── package.json
+├── CLAUDE.md          # 프로젝트지침 (이 파일)
 └── .github/
     └── workflows/
         └── deploy.yml # main 푸시 시 자동 빌드 & 배포
@@ -62,24 +65,6 @@ stock_test/
 - 새 종목 추가 시 `TV_SYMBOL`, `ANALYSIS`, `FIELDS` 세 곳 모두 업데이트
 - 한국어 주석 및 UI 텍스트 사용
 - 컴포넌트 분리보다 App.jsx 단일 파일 유지 (현재 방식 그대로)
-
-## 커밋 & 푸시 규칙
-
-### 자동 커밋 조건 (Claude가 확인 없이 즉시 실행)
-1. 사용자가 **"커밋해줘"**, **"commit"**, **"푸시해줘"**, **"push"** 라고 하면 즉시 커밋 & 푸시
-2. 기능 추가/수정이 **완전히 완료**된 시점에 자동 커밋
-3. 버그 수정 완료 후 자동 커밋
-
-### 커밋 메시지 형식
-```
-<작업 내용 한국어 요약>
-
-https://claude.ai/code/session_01VGGTVUhjFXqYEAtLC9PHxF
-```
-
-### 브랜치 전략
-- 일반 작업: `main` 직접 푸시
-- 대규모 변경: 별도 브랜치 생성 후 main 병합
 
 ## 주의사항
 - `App.jsx`가 64KB로 크므로 수정 전 반드시 전체 파일 읽기
