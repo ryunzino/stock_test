@@ -46,13 +46,25 @@ function TradingViewChart({ ticker }) {
 }
 
 function NewsPanel({ ticker, name }) {
+  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || "";
+  if (!apiKey) return (
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 20px",gap:"12px",textAlign:"center"}}>
+      <div style={{fontSize:"32px"}}>🔧</div>
+      <div style={{fontSize:"13px",color:"#aaa",fontWeight:"600"}}>뉴스 기능 준비 중</div>
+      <div style={{fontSize:"11px",color:"#444",lineHeight:"1.8"}}>
+        Claude AI 뉴스 검색 기능은<br/>현재 설정 중입니다.<br/>곧 제공될 예정이에요.
+      </div>
+      <div style={{marginTop:"8px",padding:"6px 14px",background:"#1a1a2e",border:"1px solid #2a2a4a",borderRadius:"6px",fontSize:"10px",color:"#4a9eff"}}>
+        Coming Soon
+      </div>
+    </div>
+  );
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(null);
   const [error, setError] = useState(false);
   const fetchNews = () => {
     setLoading(true); setNews([]); setFetched(ticker); setError(false);
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || "";
     fetch("https://api.anthropic.com/v1/messages", {
       method:"POST", headers:{
         "Content-Type":"application/json",
