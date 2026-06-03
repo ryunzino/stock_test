@@ -205,4 +205,32 @@ export const FIELDS = {
         ]},
     ],
   },
+  obesity: {
+    id:"obesity",label:"비만·대사 혁명",emoji:"💉",
+    fieldBottleneck:{sector:"GLP-1 공급 부족",reason:"Ozempic·Wegovy·Zepbound 전 세계 수요가 생산 설비를 2~3년치 초과. 비만 유병률 전 세계 8억 명 — 치료 가능 인구 대비 공급량이 절대적으로 부족한 구조"},
+    sectors:[
+      {id:"glp1Lead",name:"GLP-1 절대강자",emoji:"💊",isFieldBottleneck:true,bottleneck:"생산 설비 부족 — 수요가 공급을 압도",bottleneckDetail:"Novo·Lilly가 수십억 달러 생산 투자를 해도 2026년까지 공급 부족 지속 전망. 후발주자가 진입하기 전까지 사실상 복점 구조",
+        stocks:[
+          {ticker:"LLY",name:"Eli Lilly",exchange:"NYSE",role:"Zepbound(비만)·Mounjaro(당뇨) — GLP-1/GIP 이중작용제 선두",note:"임상적 체중 감량 22%, 경쟁사 대비 효능 우위",type:"bottleneck"},
+          {ticker:"NVO",name:"Novo Nordisk",exchange:"NYSE",role:"Wegovy(비만)·Ozempic(당뇨) — GLP-1 시장 개척자",note:"글로벌 점유율 50%+, CagriSema 차세대 파이프라인",type:"bottleneck"},
+        ]},
+      {id:"nextObesity",name:"차세대 비만약 도전자",emoji:"🔬",isFieldBottleneck:false,bottleneck:"임상 3상 데이터 — 경구용 신약이 차별화 관건",bottleneckDetail:"주사 불편함을 해결할 경구용 GLP-1이 게임체인저. 효능·안전성 데이터가 FDA 승인과 시장 점유의 핵심 변수",
+        stocks:[
+          {ticker:"VKTX",name:"Viking Therapeutics",exchange:"NASDAQ",role:"VK2735 경구용 GLP-1/GIP — 임상 2상 체중 감량 14.7%",note:"경구용 비만약 파이프라인 중 가장 앞선 임상 단계",type:"bottleneck"},
+          {ticker:"GPCR",name:"Structure Therapeutics",exchange:"NASDAQ",role:"GSBR-1290 경구용 GLP-1 — Phase 2b 진행 중",note:"소분자 경구 GLP-1 선두주자, 복약 편의성 차별화",type:"share"},
+          {ticker:"ALT",name:"Altimmune",exchange:"NASDAQ",role:"Pemvidutide — GLP-1/글루카곤 이중작용제 NASH 특화",note:"NASH(지방간) + 비만 동시 치료, Phase 2 긍정 데이터",type:"emerging"},
+        ]},
+      {id:"comorbidity",name:"비만 합병증 치료",emoji:"🫀",isFieldBottleneck:false,bottleneck:"GLP-1 적응증 확대 — 심혈관·신장·간 데이터가 시장 확장 열쇠",bottleneckDetail:"비만은 심장병·당뇨·수면무호흡·지방간·암의 근본 원인. GLP-1이 합병증 치료로 적응증 확대되면 전체 시장 규모 10배 이상 성장 가능",
+        stocks:[
+          {ticker:"RMD",name:"ResMed",exchange:"NYSE",role:"수면무호흡 CPAP 1위 — GLP-1 수혜·역설 동시 보유",note:"GLP-1이 수면무호흡 치료 → 기기 수요 단기 우려, 장기 미확진 환자 발굴로 상쇄",type:"bottleneck"},
+          {ticker:"AZN",name:"AstraZeneca",exchange:"NASDAQ",role:"Farxiga(SGLT2) 심부전·신장 + GLP-1 파이프라인 AZD9550",note:"심혈관·신장·종양 다각화, GLP-1 경쟁 진입 준비",type:"share"},
+          {ticker:"ISRG",name:"Intuitive Surgical",exchange:"NASDAQ",role:"da Vinci 수술 로봇 — 비만 수술(위 우회술) 수요 수혜",note:"GLP-1 비사용 중증 비만 환자의 외과적 옵션 지속",type:"share"},
+        ]},
+      {id:"platform",name:"비만약 접근성 / 플랫폼",emoji:"📱",isFieldBottleneck:false,bottleneck:"보험 비적용 — 월 $1,000+ 약가가 대중화 최대 걸림돌",bottleneckDetail:"GLP-1 약가 월 $900~1,300, 보험 적용률 30% 미만. 접근성 플랫폼이 이 간극을 메우는 구조 — 복제약·텔레헬스·구독이 대안 시장 형성",
+        stocks:[
+          {ticker:"HIMS",name:"Hims & Hers Health",exchange:"NYSE",role:"GLP-1 처방 텔레헬스 + 비만 구독 플랫폼",note:"컴파운딩 약국 논란 이후 자체 비만 프로그램으로 피벗",type:"bottleneck"},
+          {ticker:"AMZN",name:"Amazon",exchange:"NASDAQ",role:"Amazon Pharmacy + 저가 제네릭 — GLP-1 유통 채널",note:"온라인 약국 1위, 처방약 가격 투명화 리더",type:"share"},
+        ]},
+    ],
+  },
 };
