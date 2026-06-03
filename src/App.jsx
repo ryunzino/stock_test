@@ -49,13 +49,13 @@ function NewsPanel({ ticker, name }) {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(null);
-  useEffect(() => {
-    if (fetched === ticker) return;
-    setLoading(true); setNews([]); setFetched(ticker);
+  const [error, setError] = useState(false);
+  const fetchNews = () => {
+    setLoading(true); setNews([]); setFetched(ticker); setError(false);
     fetch("https://api.anthropic.com/v1/messages", {
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
-        model:"claude-sonnet-4-20250514", max_tokens:1000,
+        model:"claude-sonnet-4-6", max_tokens:1000,
         tools:[{type:"web_search_20250305",name:"web_search"}],
         messages:[{role:"user",content:"Search for the latest 4 news articles about " + name + " (ticker: " + ticker + ") stock from the past 2 weeks. Return ONLY a JSON array, no markdown, no preamble. Each item: {\"title\":\"...\",\"summary\":\"한국어로 1문장 요약\",\"date\":\"YYYY-MM-DD\",\"sentiment\":\"positive|neutral|negative\"}"}],
       }),
@@ -64,13 +64,23 @@ function NewsPanel({ ticker, name }) {
       const clean = text.replace(/```json|```/g,"").trim();
       const s=clean.indexOf("["),e=clean.lastIndexOf("]");
       if(s!==-1&&e!==-1) setNews(JSON.parse(clean.slice(s,e+1)));
-    }).catch(()=>setNews([])).finally(()=>setLoading(false));
+      else setError(true);
+    }).catch(()=>setError(true)).finally(()=>setLoading(false));
+  };
+  useEffect(() => {
+    if (fetched === ticker) return;
+    fetchNews();
   },[ticker]);
   const sc={positive:"#00ff88",neutral:"#888",negative:"#ff4444"};
   return (
     <div>
       {loading && <div style={{padding:"12px",background:"#0e0e16",borderRadius:"6px",fontSize:"11px",color:"#555"}}>Claude가 뉴스 검색 중...</div>}
-      {!loading&&news.length===0&&fetched===ticker&&<div style={{padding:"12px",background:"#0e0e16",borderRadius:"6px",fontSize:"11px",color:"#444"}}>뉴스를 불러오지 못했어요.</div>}
+      {!loading&&error&&(
+        <div style={{padding:"12px",background:"#0e0e16",borderRadius:"6px",fontSize:"11px",color:"#444",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span>뉴스를 불러오지 못했어요.</span>
+          <button onClick={fetchNews} style={{background:"#1a1a2e",border:"1px solid #333",color:"#4a9eff",cursor:"pointer",borderRadius:"4px",padding:"4px 10px",fontSize:"10px",fontFamily:"inherit"}}>다시 시도</button>
+        </div>
+      )}
       {news.map((n,i)=>(
         <div key={i} style={{padding:"10px 14px",background:"#0e0e16",border:"1px solid #1e1e2e",borderLeft:"3px solid "+(sc[n.sentiment]||"#555"),borderRadius:"6px",marginBottom:"6px"}}>
           <div style={{display:"flex",justifyContent:"space-between",gap:"8px",marginBottom:"4px"}}>
@@ -178,6 +188,7 @@ function AnalysisPanel({ ticker }) {
 
 function StockDetail({ stock, onClose }) {
   const [tab, setTab] = useState("analysis");
+  useEffect(() => { setTab("analysis"); }, [stock.ticker]);
   const t = TYPE[stock.type];
   return (
     <div style={{position:"fixed",top:0,right:0,width:"min(520px,100vw)",height:"100vh",background:"#0c0c14",borderLeft:"1px solid #1e1e2e",zIndex:100,display:"flex",flexDirection:"column",boxShadow:"-8px 0 32px rgba(0,0,0,0.6)"}}>
@@ -218,7 +229,7 @@ export default function InvestmentDashboard() {
   const handleFieldChange = (fid) => { setActiveField(fid); setActiveSectorId(FIELDS[fid].sectors[0].id); setSelectedStock(null); };
   const totalAnalyzed = Object.keys(ANALYSIS).length;
   return (
-    <div style={{fontFamily:"'IBM Plex Mono','Courier New',monospace",background:"#0a0a0f",minHeight:"100vh",color:"#e0e0e0",padding:"24px",boxSizing:"border-box"}}>
+    <div style={{fontFamily:"'IBM Plex Mono','Courier New',monospace",background:"#0a0a0f",minHeight:"100vh",color:"#e0e0e0",padding:"24px",boxSizing:"border-box",zoom:1.25}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;600;700&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}

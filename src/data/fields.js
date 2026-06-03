@@ -39,7 +39,6 @@ export const FIELDS = {
         stocks:[
           {ticker:"6954",name:"FANUC",exchange:"TSE",role:"산업용 로봇 글로벌 1위, NVIDIA 파트너",note:"CNC+로봇 복합 1위, 안정 배당 일본 우량주",type:"bottleneck"},
           {ticker:"AMZN",name:"Amazon",exchange:"NASDAQ",role:"100만대+ 물류 로봇, 전체 배송 75% 자동화",note:"AWS+로봇+배송 복합 수혜, 목표가 $300+",type:"share"},
-          {ticker:"ABB",name:"ABB",exchange:"NYSE",role:"산업 자동화 종합, 로봇+전력+자동화 수직통합",note:"글로벌 공장 자동화 Top3, 안정 배당",type:"share"},
           {ticker:"PRCT",name:"PROCEPT BioRobotics",exchange:"NASDAQ",role:"AquaBeam 수술 로봇, 전립선 시술 특화",note:"목표가 $41.45 (+55%), 내부자 순매수 지속",type:"emerging"},
         ]},
     ],
@@ -89,7 +88,6 @@ export const FIELDS = {
       {id:"compute",name:"AI 칩 / 컴퓨트",emoji:"🧠",isFieldBottleneck:false,bottleneck:"차세대 아키텍처 — Blackwell Ultra·Rubin 전환",bottleneckDetail:"AI 모델 복잡도 기하급수 증가. GPU 아키텍처 전환 주기마다 수요 폭발 — 최상위 레이어지만 하위 인프라 없이는 작동 불가",
         stocks:[
           {ticker:"NVDA",name:"NVIDIA",exchange:"NASDAQ",role:"AI GPU 압도적 1위, Blackwell 풀 양산",note:"AI GPU 85~92% 점유, PEG 0.7 이하 저평가",type:"bottleneck"},
-          {ticker:"AVGO",name:"Broadcom",exchange:"NASDAQ",role:"구글·메타 커스텀 AI ASIC 독점 설계",note:"커스텀 ASIC + VMware 반복수익, AI 매출 폭증",type:"share"},
           {ticker:"AMD",name:"AMD",exchange:"NASDAQ",role:"MI300X GPU, NVDA 대안 수요 흡수",note:"x86+GPU 이중 포트폴리오, 상대적 저평가",type:"share"},
         ]},
     ],
