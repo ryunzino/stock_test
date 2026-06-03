@@ -41,6 +41,7 @@ function TradingViewChart({ ticker }) {
     s.async = true;
     s.innerHTML = JSON.stringify({ symbol, interval:"D", timezone:"Asia/Seoul", theme:"dark", style:"1", locale:"kr", backgroundColor:"#0a0a0f", width:"100%", height:300, hide_top_toolbar:false, save_image:false });
     ref.current.appendChild(s);
+    return () => { if (ref.current) ref.current.innerHTML = ""; };
   }, [ticker]);
   return <div style={{ border:"1px solid #1e1e2e", borderRadius:"8px", overflow:"hidden" }}><div ref={ref} style={{ height:300 }} /></div>;
 }
@@ -210,7 +211,7 @@ function StockDetail({ stock, onClose }) {
   useEffect(() => { setTab("analysis"); }, [stock.ticker]);
   const t = TYPE[stock.type];
   return (
-    <div style={{position:"fixed",top:0,right:0,width:"min(520px,100vw)",height:"100vh",background:"#0c0c14",borderLeft:"1px solid #1e1e2e",zIndex:100,display:"flex",flexDirection:"column",boxShadow:"-8px 0 32px rgba(0,0,0,0.6)"}}>
+    <div style={{position:"fixed",top:0,right:0,width:"min(520px,100vw)",height:"100dvh",background:"#0c0c14",borderLeft:"1px solid #1e1e2e",zIndex:100,display:"flex",flexDirection:"column",boxShadow:"-8px 0 32px rgba(0,0,0,0.6)"}}>
       <div style={{padding:"16px 18px",borderBottom:"1px solid #1a1a2e",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
           <span style={{fontSize:"20px",fontWeight:"700",color:"#fff",fontFamily:"'Space Grotesk',sans-serif"}}>{stock.ticker}</span>
@@ -246,7 +247,7 @@ export default function InvestmentDashboard() {
   const field = FIELDS[activeField];
   const activeSector = field.sectors.find(s=>s.id===activeSectorId)||field.sectors[0];
   const handleFieldChange = (fid) => { setActiveField(fid); setActiveSectorId(FIELDS[fid].sectors[0].id); setSelectedStock(null); };
-  const totalAnalyzed = Object.keys(ANALYSIS).length;
+  const totalAnalyzed = [...new Set(Object.values(FIELDS).flatMap(f=>f.sectors.flatMap(s=>s.stocks.map(st=>st.ticker))))].length;
   return (
     <div style={{fontFamily:"'IBM Plex Mono','Courier New',monospace",background:"#0a0a0f",minHeight:"100vh",color:"#e0e0e0",padding:"24px",boxSizing:"border-box",zoom:1.25}}>
       <style>{`
@@ -293,7 +294,10 @@ export default function InvestmentDashboard() {
             <button key={s.id} className={"sector-btn"+(activeSector.id===s.id?" active":"")+(s.isFieldBottleneck?" field-bn":"")} onClick={()=>{setActiveSectorId(s.id);setSelectedStock(null);}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <span>{s.emoji} {s.name}</span>
-                {s.isFieldBottleneck&&<span style={{fontSize:"9px",color:"#ff4444"}}>●</span>}
+                <span style={{display:"flex",alignItems:"center",gap:"5px"}}>
+                  {s.isFieldBottleneck&&<span style={{fontSize:"9px",color:"#ff4444"}}>●</span>}
+                  <span style={{fontSize:"9px",color:"#444",background:"#1a1a1a",borderRadius:"3px",padding:"1px 5px"}}>{s.stocks.length}</span>
+                </span>
               </div>
             </button>
           ))}
