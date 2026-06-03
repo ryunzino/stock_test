@@ -54,6 +54,8 @@ export const FIELDS = {
           {ticker:"ETN",name:"Eaton",exchange:"NYSE",role:"전력 분배·관리 장비, 그리드→칩 전체 커버",note:"데이터센터+EV+재생에너지 3중 수혜",type:"share"},
           {ticker:"EME",name:"EMCOR Group",exchange:"NYSE",role:"데이터센터 전기·기계·냉각 시공",note:"수주잔고 $13.25억 사상 최고, ROE 35.9%",type:"share"},
           {ticker:"PWR",name:"Quanta Services",exchange:"NYSE",role:"전력선·고압송전·데이터센터 전기 인프라",note:"백로그 $440억 역대 최고, EPS +16.9%",type:"emerging"},
+          {ticker:"CCJ",name:"Cameco",exchange:"NYSE",role:"글로벌 1위 우라늄 채굴사, 핵연료 공급망 직접 장악",note:"캐나다 최고품위 광산 보유, 장기 계약 비중 확대 중",type:"bottleneck"},
+          {ticker:"OKLO",name:"Oklo",exchange:"NYSE",role:"차세대 SMR 스타트업, AI 데이터센터 전용 마이크로 원자로",note:"샘 알트만 회장, DOE 인허가 진행 중, 2027 상업 운전 목표",type:"emerging"},
         ]},
       {id:"cooling",name:"냉각 / 열관리",emoji:"❄️",isFieldBottleneck:false,bottleneck:"100kW+ 랙 밀도 — 공랭 한계 돌파",bottleneckDetail:"일반 서버랙 5~15kW인데 AI GPU 랙은 100kW+. 액체 냉각 전환이 데이터센터 운영의 전제조건",
         stocks:[
@@ -84,6 +86,7 @@ export const FIELDS = {
         stocks:[
           {ticker:"000660",name:"SK하이닉스",exchange:"KRX",role:"HBM 글로벌 1위, NVDA 독점 공급",note:"영업이익률 72% 역대 최고, 2026 출하량 완전 매진",type:"bottleneck"},
           {ticker:"MU",name:"Micron",exchange:"NASDAQ",role:"HBM3E 양산, 미국 유일 메모리 제조사",note:"CHIPS Act 수혜, UBS 목표가 $696",type:"emerging"},
+          {ticker:"005930",name:"삼성전자",exchange:"KRX",role:"HBM3E 양산 재진입, DRAM·NAND 글로벌 1위",note:"HBM 기술 격차 좁히는 중, 파운드리 2나노 GAA 양산 목표",type:"share"},
         ]},
       {id:"compute",name:"AI 칩 / 컴퓨트",emoji:"🧠",isFieldBottleneck:false,bottleneck:"차세대 아키텍처 — Blackwell Ultra·Rubin 전환",bottleneckDetail:"AI 모델 복잡도 기하급수 증가. GPU 아키텍처 전환 주기마다 수요 폭발 — 최상위 레이어지만 하위 인프라 없이는 작동 불가",
         stocks:[
@@ -136,6 +139,7 @@ export const FIELDS = {
           {ticker:"CVX",name:"Chevron",exchange:"NYSE",role:"미국 2위 석유 메이저, 퍼미안·카자흐스탄",note:"Hess 인수 완료, 자사주 $750억 매입 프로그램",type:"share"},
           {ticker:"OXY",name:"Occidental Petroleum",exchange:"NYSE",role:"버핏 보유 28%+, 탄소 포집 기술 선도",note:"탄소 포집(DAC) 정부 보조금 + 셰일 이중 수혜",type:"share"},
           {ticker:"COP",name:"ConocoPhillips",exchange:"NYSE",role:"미국 최대 독립계 E&P, 저원가 구조",note:"Marathon Oil 인수로 규모 확대, 배당+자사주",type:"emerging"},
+          {ticker:"LNG",name:"Cheniere Energy",exchange:"NYSE",role:"미국 최대 LNG 수출사, 트럼프 인허가 해제 직접 수혜 1위",note:"Sabine Pass + Corpus Christi 양대 터미널 독점, 유럽·아시아 20년 장기 계약",type:"bottleneck"},
         ]},
       {id:"finance",name:"금융 규제완화",emoji:"🏦",isFieldBottleneck:false,bottleneck:"자본 규제 완화 — Basel III 후퇴가 핵심",bottleneckDetail:"트럼프 행정부의 Basel III Endgame 규제 철폐로 대형 은행 자본 요건 완화. 자기자본 여유분이 배당·자사주 매입으로 전환",
         stocks:[
