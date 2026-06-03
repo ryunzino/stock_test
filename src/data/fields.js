@@ -169,4 +169,40 @@ export const FIELDS = {
         ]},
     ],
   },
+  aiXBio: {
+    id:"aiXBio",label:"AI × 바이오",emoji:"🧬",
+    fieldBottleneck:{sector:"AI 신약개발 플랫폼",reason:"신약 1개 개발에 평균 12년·$1조 비용. AI로 후보물질 발굴 속도는 획기적으로 빨라졌지만, 고품질 임상·생물학 데이터 부족이 AI 모델 성능의 물리적 상한선 — 데이터 없이는 AI 신약도 없다"},
+    sectors:[
+      {id:"aiDrug",name:"AI 신약개발 플랫폼",emoji:"🧪",isFieldBottleneck:true,bottleneck:"임상 데이터 부족 — AI 신약 모델의 학습 데이터가 병목",bottleneckDetail:"기존 신약 12년·$1조 구조 → AI로 후보물질 발굴 100배 가속. 단 FDA 수준 임상 데이터 생성이 여전히 물리적 제약. AI 모델 품질 = 생물학 데이터 품질에 정비례",
+        stocks:[
+          {ticker:"RXRX",name:"Recursion Pharmaceuticals",exchange:"NASDAQ",role:"AI 네이티브 신약 플랫폼 선도, 생물학 데이터 최대 보유",note:"9,000+ 화합물 이미지 데이터셋, NVDA 전략 투자",type:"bottleneck"},
+          {ticker:"SDGR",name:"Schrödinger",exchange:"NASDAQ",role:"분자 시뮬레이션 SW, 빅파마·빅테크 모두 고객",note:"자체 파이프라인 + 소프트웨어 이중 수익 구조",type:"share"},
+          {ticker:"ABSI",name:"AbSci Corp",exchange:"NASDAQ",role:"AI 단백질 설계·합성 플랫폼, 항체 의약품 특화",note:"제약사와 공동개발 계약 확대 중",type:"emerging"},
+        ]},
+      {id:"genomics",name:"유전체·단백질 분석",emoji:"🔬",isFieldBottleneck:false,bottleneck:"시퀀싱 비용 — $100 전장유전체가 AI 바이오 대중화 관문",bottleneckDetail:"AI 신약·진단의 원재료는 유전체 데이터. 시퀀싱 비용 하락 → 데이터량 폭증 → AI 모델 정확도 향상. $100 게놈 달성이 정밀의료 대중화의 기폭제",
+        stocks:[
+          {ticker:"ILMN",name:"Illumina",exchange:"NASDAQ",role:"차세대 시퀀싱(NGS) 글로벌 80%+ 독점",note:"NovaSeq X 출시로 시퀀싱 비용 획기적 절감",type:"bottleneck"},
+          {ticker:"PACB",name:"Pacific Biosciences",exchange:"NASDAQ",role:"장독취 시퀀싱(Long-read), 복잡 유전체 해독 우위",note:"ILMN 대비 정확도·길이 차별화, 임상 채택 확대 중",type:"share"},
+          {ticker:"TXG",name:"10x Genomics",exchange:"NASDAQ",role:"단일세포 분석 기술, 세포 지도 작성 표준",note:"전 세계 연구소 표준 장비로 빠르게 채택 중",type:"emerging"},
+        ]},
+      {id:"glp1",name:"GLP-1 / 비만·대사",emoji:"💊",isFieldBottleneck:false,bottleneck:"GLP-1 생산 공급 — 수요가 생산 능력 1~2년 초과",bottleneckDetail:"Ozempic·Wegovy·Mounjaro 수요 폭발. 복잡한 펩타이드 의약품 생산 시설 증설에 수년 소요 — 공급이 수요를 쫓아가지 못하는 구조",
+        stocks:[
+          {ticker:"LLY",name:"Eli Lilly",exchange:"NYSE",role:"Mounjaro·Zepbound + AI 신약 파이프라인 선도",note:"AI로 차세대 GLP-1·알츠하이머 병행 개발, 시총 $6,000억+",type:"bottleneck"},
+          {ticker:"NVO",name:"Novo Nordisk",exchange:"NYSE",role:"Ozempic·Wegovy 원조 개발사, GLP-1 시장 과점",note:"덴마크 시총 1위, 유럽 최대 기업",type:"share"},
+          {ticker:"VKTX",name:"Viking Therapeutics",exchange:"NASDAQ",role:"차세대 GLP-1 임상 선도, 경구용 개발 중",note:"VK2735 임상 2상 긍정, 빅파마 인수 프리미엄 기대",type:"emerging"},
+        ]},
+      {id:"aiDiag",name:"AI 의료 진단",emoji:"🏥",isFieldBottleneck:false,bottleneck:"FDA AI 인허가 — 규제 프레임워크 미확립이 병목",bottleneckDetail:"AI 진단 정확도는 인간 의사 수준 상회. 단 FDA AI 의료기기 허가 기준이 아직 불명확. 규제 명확성 확보 시 시장 폭발적 개방",
+        stocks:[
+          {ticker:"TEM",name:"Tempus AI",exchange:"NASDAQ",role:"AI 임상 데이터 플랫폼, 의료 AI 핵심 인프라",note:"구글·소프트뱅크 투자, 900만+ 환자 데이터 보유",type:"bottleneck"},
+          {ticker:"GH",name:"Guardant Health",exchange:"NASDAQ",role:"혈액 기반 암 조기진단(액체생검) + AI 분석",note:"Shield 대장암 FDA 승인, 멀티캔서 확장 중",type:"share"},
+          {ticker:"EXAS",name:"Exact Sciences",exchange:"NASDAQ",role:"비침습 암 스크리닝(Cologuard) + AI 멀티캔서 검진",note:"Cologuard 시장 침투율 20% 미만 → 성장 여지 막대",type:"emerging"},
+        ]},
+      {id:"genEdit",name:"유전자 편집·치료",emoji:"✂️",isFieldBottleneck:false,bottleneck:"in vivo 전달 시스템 — 유전자 편집 도구를 표적 세포에 정확히 전달하는 기술",bottleneckDetail:"CRISPR 기술 자체보다 전달체(delivery vehicle) 기술이 핵심 병목. 간·혈액은 해결됐지만 뇌·폐·근육 등 고형 장기 전달이 미해결 — 이 문제가 풀리면 수천 가지 유전 질환 치료 가능",
+        stocks:[
+          {ticker:"CRSP",name:"CRISPR Therapeutics",exchange:"NASDAQ",role:"세계 최초 CRISPR 치료제 Casgevy 승인",note:"겸상적혈구병·베타지중해빈혈 치료 상용화 완료",type:"bottleneck"},
+          {ticker:"BEAM",name:"Beam Therapeutics",exchange:"NASDAQ",role:"염기 편집(Base Editing) — CRISPR보다 정밀한 차세대 편집",note:"오프타겟 부작용 감소, 단일 염기 교정 가능",type:"share"},
+          {ticker:"NTLA",name:"Intellia Therapeutics",exchange:"NASDAQ",role:"체내(in vivo) 직접 유전자 편집 선도",note:"NTLA-2001 임상 긍정, 노바티스 파트너십",type:"emerging"},
+        ]},
+    ],
+  },
 };
