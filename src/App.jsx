@@ -61,7 +61,7 @@ function InfoSection({ title, content, color, icon }) {
   );
 }
 
-function TradingViewChart({ ticker }) {
+function TradingViewChart({ ticker, height=300 }) {
   const ref = useRef(null);
   const symbol = TV_SYMBOL[ticker] || ("NASDAQ:" + ticker);
   useEffect(() => {
@@ -70,11 +70,11 @@ function TradingViewChart({ ticker }) {
     const s = document.createElement("script");
     s.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
     s.async = true;
-    s.innerHTML = JSON.stringify({ symbol, interval:"D", timezone:"Asia/Seoul", theme:"dark", style:"1", locale:"kr", backgroundColor:"#0a0a0f", width:"100%", height:300, hide_top_toolbar:false, save_image:false });
+    s.innerHTML = JSON.stringify({ symbol, interval:"D", timezone:"Asia/Seoul", theme:"dark", style:"1", locale:"kr", backgroundColor:"#0a0a0f", width:"100%", height, hide_top_toolbar:false, save_image:false });
     ref.current.appendChild(s);
     return () => { if (ref.current) ref.current.innerHTML = ""; };
   }, [ticker]);
-  return <div style={{ border:"1px solid #1e1e2e", borderRadius:"8px", overflow:"hidden" }}><div ref={ref} style={{ height:300 }} /></div>;
+  return <div style={{ border:"1px solid #1e1e2e", borderRadius:"8px", overflow:"hidden" }}><div ref={ref} style={{ height }} /></div>;
 }
 
 function NewsPanel({ ticker, name }) {
@@ -305,53 +305,21 @@ function SubLabel({ label, count, color }) {
   );
 }
 
-function CompareChart({ stocks }) {
-  const uid = useRef(`tv_${Math.random().toString(36).slice(2,8)}`);
-  const divRef = useRef(null);
-
-  useEffect(() => {
-    if (!divRef.current) return;
-    let cancelled = false;
-
-    const init = () => {
-      if (cancelled || !divRef.current) return;
-      new window.TradingView.widget({
-        container_id: uid.current,
-        symbol: TV_SYMBOL[stocks[0].ticker] || "NASDAQ:"+stocks[0].ticker,
-        interval: "W",
-        timezone: "Asia/Seoul",
-        theme: "dark",
-        style: "2",
-        locale: "kr",
-        width: "100%",
-        height: 520,
-        hide_top_toolbar: false,
-        save_image: false,
-        compare_symbols: stocks.slice(1).map(st => ({
-          symbol: TV_SYMBOL[st.ticker] || "NASDAQ:"+st.ticker,
-          position: "SameScale"
-        }))
-      });
-    };
-
-    if (window.TradingView) {
-      init();
-    } else {
-      let tvScript = document.querySelector('script[src*="tv.js"]');
-      if (!tvScript) {
-        tvScript = document.createElement("script");
-        tvScript.src = "https://s3.tradingview.com/tv.js";
-        document.head.appendChild(tvScript);
-      }
-      tvScript.addEventListener("load", init, { once: true });
-    }
-
-    return () => { cancelled = true; };
-  }, []);
-
+function CompareGrid({ stocks }) {
+  const chartH = stocks.length <= 2 ? 400 : 300;
+  const cols = stocks.length === 1 ? "1fr" : "1fr 1fr";
   return (
-    <div style={{border:"1px solid #1e1e2e",borderRadius:"8px",overflow:"hidden"}}>
-      <div id={uid.current} ref={divRef} style={{height:520}} />
+    <div style={{display:"grid", gridTemplateColumns:cols, gap:"10px"}}>
+      {stocks.map((s, i) => (
+        <div key={s.ticker}>
+          <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"6px",padding:"5px 10px",background:`${COMPARE_COLORS[i]}14`,border:`1px solid ${COMPARE_COLORS[i]}44`,borderRadius:"6px"}}>
+            <span style={{width:"10px",height:"10px",borderRadius:"50%",background:COMPARE_COLORS[i],flexShrink:0,display:"inline-block"}} />
+            <span style={{fontSize:"12px",fontWeight:700,color:COMPARE_COLORS[i]}}>{s.ticker}</span>
+            <span style={{fontSize:"10px",color:"#555"}}>{s.name}</span>
+          </div>
+          <TradingViewChart ticker={s.ticker} height={chartH} />
+        </div>
+      ))}
     </div>
   );
 }
@@ -448,24 +416,15 @@ function CompareView() {
       </div>
       {/* 오른쪽: 비교 차트 */}
       <div style={{flex:1,minWidth:0}}>
-        {compareList.length < 2
+        {compareList.length === 0
           ? (
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"440px",background:"#0d0d14",border:"1px dashed #1e1e2e",borderRadius:"10px",gap:"12px"}}>
               <div style={{fontSize:"36px"}}>📊</div>
-              <div style={{fontSize:"13px",color:"#555",fontWeight:600}}>종목을 2개 이상 선택하세요</div>
+              <div style={{fontSize:"13px",color:"#555",fontWeight:600}}>종목을 선택하세요</div>
               <div style={{fontSize:"10px",color:"#333"}}>최대 5개 · 탭/섹터별로 찾아 선택</div>
             </div>
           ) : (
-            <>
-              <div style={{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"10px"}}>
-                {compareList.map((s,i)=>(
-                  <div key={s.ticker} style={{padding:"4px 12px",background:`${COMPARE_COLORS[i]}22`,border:`1px solid ${COMPARE_COLORS[i]}66`,borderRadius:"20px",fontSize:"11px",fontWeight:700,color:COMPARE_COLORS[i]}}>
-                    {s.ticker} <span style={{fontWeight:400,opacity:0.7,fontSize:"9px"}}>{s.name}</span>
-                  </div>
-                ))}
-              </div>
-              <CompareChart key={compareList.map(s=>s.ticker).join(',')} stocks={compareList} />
-            </>
+            <CompareGrid stocks={compareList} />
           )
         }
       </div>
