@@ -49,13 +49,35 @@ stock_test/
 - `InvestmentDashboard` — 최상위 컴포넌트
 
 ## 현재 탭 구성
-| 탭 | 섹터 수 | 종목 수 |
-|----|---------|--------|
-| 🤖 Physical AI | 5 | 16 |
-| 🏗️ AI 인프라 | 7 | 25 |
-| 🚀 우주 테마 | 4 | 9 |
-| 🇺🇸 트럼프 테마 | 6 | 23 |
-| 🧬 AI × 바이오 | 5 | 15 |
+| 탭 ID | 탭 이름 | 섹터 수 |
+|-------|---------|--------|
+| physicalAI | 🤖 Physical AI | 5 |
+| aiInfra | 🏗️ AI 인프라 | 7 |
+| space | 🚀 우주 테마 | 4 |
+| trumpTheme | 🇺🇸 트럼프 테마 | 6 |
+| aiXBio | 🧬 AI × 바이오 | 5 |
+| obesity | 💉 비만·대사 혁명 | 4 |
+| watchlist | 📌 요청 종목 | 1 |
+
+## 📌 요청 종목 탭 운영 규칙
+사용자가 특정 종목 분석을 요청하면 아래 순서로 처리:
+
+1. **analysis.js** — 분석 데이터 추가 (기존 형식 동일)
+2. **fields.js** — `watchlist.sectors[0].stocks` 배열에 종목 추가
+3. **symbols.js** — TradingView 심볼 추가
+4. 빌드 확인 후 커밋·푸시
+
+종목 추가 형식 (fields.js):
+```js
+{ticker:"ARM", name:"Arm Holdings", exchange:"NASDAQ",
+ role:"CPU 설계 IP 독점, 모바일·AI 에지 칩 90%+ 채택",
+ note:"핵심 분석 포인트 한 줄", type:"bottleneck"}
+```
+
+type 선택 기준:
+- `bottleneck` — 해당 분야 병목 장악 기업
+- `share` — 시장 점유율 상위권
+- `emerging` — 고성장 소형/중형주
 
 ## 향후 로드맵
 - [ ] 📈 자동매매 프로그램 연동

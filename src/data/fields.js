@@ -308,4 +308,13 @@ export const FIELDS = {
         ]},
     ],
   },
+  watchlist: {
+    id:"watchlist",label:"요청 종목",emoji:"📌",
+    fieldBottleneck:{sector:"개별 요청 분석",reason:"특정 종목에 대한 심층 분석 요청 시 이 탭에 추가됩니다. 바틀넥·점유율·유망주 태그로 성격을 구분하며, 분석 패널에서 투자 근거·밸류에이션·진입 전략을 확인할 수 있습니다."},
+    sectors:[
+      {id:"requested",name:"개별 분석 요청",emoji:"🔍",isFieldBottleneck:false,bottleneck:"종목별 핵심 리스크 참조",bottleneckDetail:"각 종목 클릭 후 투자 분석 탭에서 상세 내용을 확인하세요. 바틀넥(빨강)은 해당 분야 병목 장악 기업, 점유율(파랑)은 시장 상위권, 유망주(보라)는 고성장 소형주입니다.",
+        stocks:[
+        ]},
+    ],
+  },
 };
