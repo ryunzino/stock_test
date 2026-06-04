@@ -327,18 +327,29 @@ function CompareChart({ stocks }) {
     setStatus("loading");
     if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
 
-    const fetchStock = (ticker) =>
-      fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${toYahooSym(ticker)}?range=1y&interval=1wk`)
-        .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-        .then(json => {
-          const res = json.chart?.result?.[0];
-          if (!res) throw new Error("no data");
-          const seen = new Set();
-          return res.timestamp
-            .map((t, i) => ({ time: t, value: res.indicators.quote[0].close[i] }))
-            .filter(d => d.value != null && !seen.has(d.time) && seen.add(d.time))
-            .sort((a, b) => a.time - b.time);
-        });
+    const parseYahoo = (json) => {
+      const res = json.chart?.result?.[0];
+      if (!res) throw new Error("no data");
+      const seen = new Set();
+      return res.timestamp
+        .map((t, i) => ({ time: t, value: res.indicators.quote[0].close[i] }))
+        .filter(d => d.value != null && !seen.has(d.time) && seen.add(d.time))
+        .sort((a, b) => a.time - b.time);
+    };
+
+    const fetchStock = async (ticker) => {
+      const sym = toYahooSym(ticker);
+      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=1y&interval=1wk`;
+      // Yahoo Finance blocks direct browser requests — use CORS proxy
+      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`;
+      let r = await fetch(proxyUrl);
+      if (!r.ok) {
+        // Fallback proxy
+        r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`);
+        if (!r.ok) throw new Error("fetch failed");
+      }
+      return parseYahoo(await r.json());
+    };
 
     Promise.all(stocks.map(s => fetchStock(s.ticker)))
       .then(allData => {
