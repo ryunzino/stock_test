@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createChart, ColorType } from "lightweight-charts";
 import { TV_SYMBOL } from './data/symbols';
 import { TYPE, FIELDS } from './data/fields';
 import { ANALYSIS } from './data/analysis';
@@ -307,39 +308,103 @@ function SubLabel({ label, count, color }) {
 
 function CompareChart({ stocks }) {
   const containerRef = useRef(null);
+  const chartRef = useRef(null);
+  const [status, setStatus] = useState("loading");
+
+  const toYahooSym = (ticker) => {
+    const tv = TV_SYMBOL[ticker];
+    if (!tv) return ticker;
+    const [ex, sym] = tv.split(":");
+    if (ex === "KRX") return sym + ".KS";
+    if (ex === "TSE") return sym + ".T";
+    if (ex === "HKEX") return sym + ".HK";
+    return sym.replace(".", "-");
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
-    containerRef.current.innerHTML = "";
+    let cancelled = false;
+    setStatus("loading");
+    if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
 
-    const widgetDiv = document.createElement("div");
-    widgetDiv.className = "tradingview-widget-container__widget";
-    widgetDiv.style.height = "520px";
+    const fetchStock = (ticker) =>
+      fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${toYahooSym(ticker)}?range=1y&interval=1wk`)
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(json => {
+          const res = json.chart?.result?.[0];
+          if (!res) throw new Error("no data");
+          const seen = new Set();
+          return res.timestamp
+            .map((t, i) => ({ time: t, value: res.indicators.quote[0].close[i] }))
+            .filter(d => d.value != null && !seen.has(d.time) && seen.add(d.time))
+            .sort((a, b) => a.time - b.time);
+        });
 
-    const script = document.createElement("script");
-    script.type = "text/javascript";
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    script.async = true;
-    script.appendChild(document.createTextNode(JSON.stringify({
-      symbol: TV_SYMBOL[stocks[0].ticker] || "NASDAQ:"+stocks[0].ticker,
-      interval: "W", timezone: "Asia/Seoul", theme: "dark", style: "2",
-      locale: "kr", backgroundColor: "#0a0a0f", width: "100%", height: 520,
-      hide_top_toolbar: false, save_image: false,
-      compare_symbols: stocks.slice(1).map(st => ({
-        symbol: TV_SYMBOL[st.ticker] || "NASDAQ:"+st.ticker,
-        position: "SameScale"
-      }))
-    })));
+    Promise.all(stocks.map(s => fetchStock(s.ticker)))
+      .then(allData => {
+        if (cancelled || !containerRef.current) return;
 
-    containerRef.current.appendChild(widgetDiv);
-    containerRef.current.appendChild(script);
+        const chart = createChart(containerRef.current, {
+          width: containerRef.current.clientWidth,
+          height: 500,
+          layout: {
+            background: { type: ColorType.Solid, color: "#0a0a0f" },
+            textColor: "#888",
+          },
+          grid: { vertLines: { color: "#151520" }, horzLines: { color: "#151520" } },
+          rightPriceScale: { borderColor: "#1a1a2a" },
+          timeScale: { borderColor: "#1a1a2a", timeVisible: false },
+          localization: { priceFormatter: p => p.toFixed(1) + "%" },
+        });
+        chartRef.current = chart;
 
-    return () => { if (containerRef.current) containerRef.current.innerHTML = ""; };
-  }, []);
+        allData.forEach((data, i) => {
+          const base = data[0]?.value || 1;
+          const series = chart.addLineSeries({
+            color: COMPARE_COLORS[i],
+            lineWidth: 2,
+            title: stocks[i].ticker,
+            priceFormat: { type: "custom", formatter: p => p.toFixed(1) + "%", minMove: 0.01 },
+          });
+          series.setData(data.map(d => ({ time: d.time, value: +((d.value / base - 1) * 100).toFixed(2) })));
+        });
+
+        chart.timeScale().fitContent();
+
+        const ro = new ResizeObserver(() => {
+          if (containerRef.current && chartRef.current) {
+            chartRef.current.applyOptions({ width: containerRef.current.clientWidth });
+          }
+        });
+        ro.observe(containerRef.current);
+        containerRef.current._ro = ro;
+
+        setStatus("ready");
+      })
+      .catch(() => { if (!cancelled) setStatus("error"); });
+
+    return () => {
+      cancelled = true;
+      containerRef.current?._ro?.disconnect();
+      if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
+    };
+  }, [stocks.map(s => s.ticker).join(",")]);
 
   return (
-    <div ref={containerRef} className="tradingview-widget-container"
-      style={{border:"1px solid #1e1e2e",borderRadius:"8px",overflow:"hidden"}} />
+    <div style={{border:"1px solid #1e1e2e",borderRadius:"8px",overflow:"hidden",background:"#0a0a0f",position:"relative",minHeight:500}}>
+      {status === "loading" && (
+        <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:10}}>
+          <div style={{fontSize:28}} className="pulse">📊</div>
+          <div style={{fontSize:11,color:"#555"}}>Yahoo Finance에서 주가 데이터 불러오는 중...</div>
+        </div>
+      )}
+      {status === "error" && (
+        <div style={{height:500,display:"flex",alignItems:"center",justifyContent:"center",color:"#ff6666",fontSize:11,gap:8}}>
+          ⚠ 데이터 로드 실패 — 잠시 후 다시 시도하세요
+        </div>
+      )}
+      <div ref={containerRef} style={{height:500,visibility:status==="ready"?"visible":"hidden"}} />
+    </div>
   );
 }
 
