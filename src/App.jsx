@@ -269,6 +269,40 @@ function StockDetail({ stock, onClose }) {
   );
 }
 
+function StockCard({ s, group, selectedStock, onSelectStock }) {
+  return (
+    <div
+      onClick={()=>onSelectStock(s)}
+      style={{
+        padding:"8px 10px",borderRadius:"6px",cursor:"pointer",
+        background:"rgba(255,255,255,0.03)",border:`1px solid ${group.border}`,
+        borderLeft:`3px solid ${group.color}`,transition:"filter 0.15s",
+        outline:selectedStock?.ticker===s.ticker?"2px solid #4a9eff":"none",
+        outlineOffset:"1px",
+      }}
+      onMouseEnter={e=>e.currentTarget.style.filter="brightness(1.5)"}
+      onMouseLeave={e=>e.currentTarget.style.filter="brightness(1)"}
+    >
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"2px"}}>
+        <span style={{fontSize:"12px",fontWeight:"700",color:"#fff"}}>{s.ticker}</span>
+        <span style={{fontSize:"8px",color:"#555"}}>{s.fieldEmoji} {s.fieldLabel}</span>
+      </div>
+      <div style={{fontSize:"10px",color:"#777",marginBottom:"2px"}}>{s.name}</div>
+      <div style={{fontSize:"9px",color:group.color,opacity:0.8}}>{s.verdict} · {s.horizon}</div>
+    </div>
+  );
+}
+
+function SubLabel({ label, count, color }) {
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:"6px",margin:"10px 0 5px"}}>
+      <span style={{fontSize:"9px",color,letterSpacing:"1px",textTransform:"uppercase",fontWeight:700}}>{label}</span>
+      <span style={{fontSize:"9px",color,background:`${color}22`,padding:"1px 6px",borderRadius:"8px"}}>{count}</span>
+      <div style={{flex:1,height:"1px",background:color,opacity:0.15}}/>
+    </div>
+  );
+}
+
 function SummaryView({ onSelectStock, selectedStock }) {
   return (
     <div>
@@ -276,41 +310,33 @@ function SummaryView({ onSelectStock, selectedStock }) {
         전체 <span style={{color:"#00ff88"}}>{TOTAL_ANALYZED}종목</span> 투자 평가별 분류 — 종목 클릭 시 상세 분석
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:"14px"}}>
-        {VERDICT_GROUPS.map(group=>(
-          <div key={group.color} style={{background:group.bg,border:`1px solid ${group.border}`,borderTop:`3px solid ${group.color}`,borderRadius:"10px",padding:"14px"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-              <div style={{fontSize:"10px",color:group.color,letterSpacing:"2px",textTransform:"uppercase",fontWeight:700}}>
-                {group.emoji} {group.label}
-              </div>
-              <span style={{fontSize:"10px",color:group.color,background:`${group.color}22`,padding:"2px 8px",borderRadius:"10px",fontWeight:700}}>
-                {group.stocks.length}
-              </span>
-            </div>
-            <div style={{display:"flex",flexDirection:"column",gap:"4px"}}>
-              {group.stocks.map(s=>(
-                <div key={s.ticker}
-                  onClick={()=>onSelectStock(s)}
-                  style={{
-                    padding:"8px 10px",borderRadius:"6px",cursor:"pointer",
-                    background:"rgba(255,255,255,0.03)",border:`1px solid ${group.border}`,
-                    borderLeft:`3px solid ${group.color}`,transition:"filter 0.15s",
-                    outline:selectedStock?.ticker===s.ticker?"2px solid #4a9eff":"none",
-                    outlineOffset:"1px",
-                  }}
-                  onMouseEnter={e=>e.currentTarget.style.filter="brightness(1.5)"}
-                  onMouseLeave={e=>e.currentTarget.style.filter="brightness(1)"}
-                >
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"2px"}}>
-                    <span style={{fontSize:"12px",fontWeight:"700",color:"#fff"}}>{s.ticker}</span>
-                    <span style={{fontSize:"8px",color:"#555"}}>{s.fieldEmoji} {s.fieldLabel}</span>
-                  </div>
-                  <div style={{fontSize:"10px",color:"#777",marginBottom:"2px"}}>{s.name}</div>
-                  <div style={{fontSize:"9px",color:group.color,opacity:0.8}}>{s.verdict} · {s.horizon}</div>
+        {VERDICT_GROUPS.map(group=>{
+          const isGreen = group.color === "#00ff88";
+          const strongStocks = isGreen ? group.stocks.filter(s=>s.verdict.includes("강력")) : [];
+          const normalStocks = isGreen ? group.stocks.filter(s=>!s.verdict.includes("강력")) : group.stocks;
+          return (
+            <div key={group.color} style={{background:group.bg,border:`1px solid ${group.border}`,borderTop:`3px solid ${group.color}`,borderRadius:"10px",padding:"14px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
+                <div style={{fontSize:"10px",color:group.color,letterSpacing:"2px",textTransform:"uppercase",fontWeight:700}}>
+                  {group.emoji} {group.label}
                 </div>
-              ))}
+                <span style={{fontSize:"10px",color:group.color,background:`${group.color}22`,padding:"2px 8px",borderRadius:"10px",fontWeight:700}}>
+                  {group.stocks.length}
+                </span>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:"4px"}}>
+                {isGreen && strongStocks.length > 0 && (
+                  <>
+                    <SubLabel label="⭐ 강력 매수" count={strongStocks.length} color={group.color} />
+                    {strongStocks.map(s=><StockCard key={s.ticker} s={s} group={group} selectedStock={selectedStock} onSelectStock={onSelectStock}/>)}
+                    <SubLabel label="▲ 매수" count={normalStocks.length} color={group.color} />
+                  </>
+                )}
+                {normalStocks.map(s=><StockCard key={s.ticker} s={s} group={group} selectedStock={selectedStock} onSelectStock={onSelectStock}/>)}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
