@@ -9,7 +9,7 @@
 ## 기술 스택
 - **프론트엔드:** React 18 + Vite 5
 - **배포:** GitHub Pages (GitHub Actions 자동 빌드)
-- **패키지 관리:** npm (package-lock.json 없음, `npm install` 사용)
+- **패키지 관리:** npm (`package-lock.json` 존재, `npm install` 사용)
 - **차트:** TradingView Embed Widget
 - **AI 뉴스:** Anthropic Claude API (claude-sonnet-4-20250514)
 
@@ -17,15 +17,20 @@
 ```
 stock_test/
 ├── src/
-│   ├── App.jsx        # 메인 컴포넌트 (전체 대시보드 로직)
-│   └── main.jsx       # React 진입점
-├── index.html         # Vite HTML 템플릿
-├── vite.config.js     # base: '/stock_test/' 설정 필수
+│   ├── App.jsx           # UI 컴포넌트 (TradingViewChart, NewsPanel, AnalysisPanel 등)
+│   ├── main.jsx          # React 진입점
+│   └── data/
+│       ├── symbols.js    # TradingView 심볼 매핑
+│       ├── fields.js     # 탭/섹터/종목 구성 + TYPE 정의
+│       └── analysis.js   # 종목별 투자 분석 데이터
+├── index.html            # Vite HTML 템플릿
+├── vite.config.js        # base: '/stock_test/' 설정 필수
 ├── package.json
-├── CLAUDE.md          # 프로젝트지침 (이 파일)
+├── package-lock.json
+├── CLAUDE.md             # 프로젝트지침 (이 파일)
 └── .github/
     └── workflows/
-        └── deploy.yml # main 푸시 시 자동 빌드 & 배포
+        └── deploy.yml    # main 푸시 시 자동 빌드 & 배포
 ```
 
 ## 배포 흐름
@@ -37,14 +42,19 @@ stock_test/
 > **주의:** `vite.config.js`의 `base: '/stock_test/'` 는 절대 제거하지 말 것.
 > 제거하면 GitHub Pages에서 assets 경로가 깨짐.
 
-## App.jsx 구조
-- `TYPE` — 종목 구분 (바틀넥/점유율/유망주) 스타일 정의
-- `TV_SYMBOL` — TradingView 심볼 매핑
-- `ANALYSIS` — 종목별 상세 투자 분석 데이터
-- `FIELDS` — 탭(분야) 및 섹터/종목 구성
-- `TradingViewChart` — 차트 컴포넌트
+## 소스 구조
+
+### data/ (데이터 분리)
+- `symbols.js` — TradingView 심볼 매핑 (`TV_SYMBOL`)
+- `fields.js` — 탭/섹터/종목 구성 (`TYPE`, `FIELDS`)
+- `analysis.js` — 종목별 상세 투자 분석 (`ANALYSIS`)
+
+### App.jsx (UI 컴포넌트)
+- `MetricGrid` — 2열 지표 그리드 (재사용 컴포넌트)
+- `InfoSection` — 제목+내용 섹션 (재사용 컴포넌트)
+- `TradingViewChart` — 차트 임베드
 - `NewsPanel` — Claude API로 최신 뉴스 검색
-- `AnalysisPanel` — 투자 분석 표시
+- `AnalysisPanel` — 투자 분석 표시 (밸류에이션/재무/성장/경쟁사/촉매/진입전략)
 - `StockDetail` — 우측 슬라이드 패널 (차트+뉴스+분석)
 - `InvestmentDashboard` — 최상위 컴포넌트
 
@@ -91,6 +101,6 @@ type 선택 기준:
 - 컴포넌트 분리보다 App.jsx 단일 파일 유지 (현재 방식 그대로)
 
 ## 주의사항
-- `App.jsx`가 64KB로 크므로 수정 전 반드시 전체 파일 읽기
+- 데이터 수정 시 `symbols.js` / `fields.js` / `analysis.js` 세 파일 모두 확인
 - GitHub Actions 빌드 실패 시 즉시 원인 파악 후 재시도
-- `package-lock.json` 없음 — `cache: npm` 옵션 사용 금지
+- `cache: npm` 활성화됨 (package-lock.json 존재)
