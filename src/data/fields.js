@@ -323,6 +323,9 @@ export const FIELDS = {
     sectors:[
       {id:"requested",name:"개별 분석 요청",emoji:"🔍",isFieldBottleneck:false,bottleneck:"종목별 핵심 리스크 참조",bottleneckDetail:"각 종목 클릭 후 투자 분석 탭에서 상세 내용을 확인하세요. 바틀넥(빨강)은 해당 분야 병목 장악 기업, 점유율(파랑)은 시장 상위권, 유망주(보라)는 고성장 소형주입니다.",
         stocks:[
+          {ticker:"VIVO",name:"VivoPower PLC",exchange:"NASDAQ",
+           role:"AI 데이터센터 인프라 피벗 — 소버린 AI DC + 노르웨이 수력 재생에너지 특화",
+           note:"2026.4 EBITDA 흑자 전환, Tembo e-LV(TEMB) 분리 상장 진행 중", type:"emerging"},
         ]},
     ],
   },
