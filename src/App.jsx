@@ -307,11 +307,12 @@ function SubLabel({ label, count, color }) {
 }
 
 function CompareChart({ stocks }) {
+  const apiKey = import.meta.env.VITE_ALPHA_VANTAGE_KEY || "";
   const containerRef = useRef(null);
   const chartRef = useRef(null);
-  const [status, setStatus] = useState("loading");
+  const [status, setStatus] = useState(!apiKey ? "no-key" : "loading");
 
-  const toYahooSym = (ticker) => {
+  const toAVSym = (ticker) => {
     const tv = TV_SYMBOL[ticker];
     if (!tv) return ticker;
     const [ex, sym] = tv.split(":");
@@ -322,34 +323,26 @@ function CompareChart({ stocks }) {
   };
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!apiKey || !containerRef.current) return;
     let cancelled = false;
     setStatus("loading");
     if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
 
-    const parseYahoo = (json) => {
-      const res = json.chart?.result?.[0];
-      if (!res) throw new Error("no data");
-      const seen = new Set();
-      return res.timestamp
-        .map((t, i) => ({ time: t, value: res.indicators.quote[0].close[i] }))
-        .filter(d => d.value != null && !seen.has(d.time) && seen.add(d.time))
-        .sort((a, b) => a.time - b.time);
-    };
-
-    const fetchStock = async (ticker) => {
-      const sym = toYahooSym(ticker);
-      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=1y&interval=1wk`;
-      // Yahoo Finance blocks direct browser requests — use CORS proxy
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`;
-      let r = await fetch(proxyUrl);
-      if (!r.ok) {
-        // Fallback proxy
-        r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`);
-        if (!r.ok) throw new Error("fetch failed");
-      }
-      return parseYahoo(await r.json());
-    };
+    const fetchStock = (ticker) =>
+      fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY_ADJUSTED&symbol=${toAVSym(ticker)}&apikey=${apiKey}`)
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(json => {
+          const weekly = json["Weekly Adjusted Time Series"];
+          if (!weekly) throw new Error("no data");
+          return Object.entries(weekly)
+            .map(([date, v]) => ({
+              time: Math.floor(new Date(date).getTime() / 1000),
+              value: parseFloat(v["5. adjusted close"])
+            }))
+            .filter(d => !isNaN(d.value))
+            .sort((a, b) => a.time - b.time)
+            .slice(-52);
+        });
 
     Promise.all(stocks.map(s => fetchStock(s.ticker)))
       .then(allData => {
@@ -358,38 +351,28 @@ function CompareChart({ stocks }) {
         const chart = createChart(containerRef.current, {
           width: containerRef.current.clientWidth,
           height: 500,
-          layout: {
-            background: { type: ColorType.Solid, color: "#0a0a0f" },
-            textColor: "#888",
-          },
+          layout: { background: { type: ColorType.Solid, color: "#0a0a0f" }, textColor: "#888" },
           grid: { vertLines: { color: "#151520" }, horzLines: { color: "#151520" } },
           rightPriceScale: { borderColor: "#1a1a2a" },
           timeScale: { borderColor: "#1a1a2a", timeVisible: false },
-          localization: { priceFormatter: p => p.toFixed(1) + "%" },
         });
         chartRef.current = chart;
 
         allData.forEach((data, i) => {
           const base = data[0]?.value || 1;
           const series = chart.addLineSeries({
-            color: COMPARE_COLORS[i],
-            lineWidth: 2,
-            title: stocks[i].ticker,
+            color: COMPARE_COLORS[i], lineWidth: 2, title: stocks[i].ticker,
             priceFormat: { type: "custom", formatter: p => p.toFixed(1) + "%", minMove: 0.01 },
           });
           series.setData(data.map(d => ({ time: d.time, value: +((d.value / base - 1) * 100).toFixed(2) })));
         });
 
         chart.timeScale().fitContent();
-
         const ro = new ResizeObserver(() => {
-          if (containerRef.current && chartRef.current) {
-            chartRef.current.applyOptions({ width: containerRef.current.clientWidth });
-          }
+          chartRef.current?.applyOptions({ width: containerRef.current?.clientWidth || 600 });
         });
         ro.observe(containerRef.current);
         containerRef.current._ro = ro;
-
         setStatus("ready");
       })
       .catch(() => { if (!cancelled) setStatus("error"); });
@@ -399,19 +382,42 @@ function CompareChart({ stocks }) {
       containerRef.current?._ro?.disconnect();
       if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
     };
-  }, [stocks.map(s => s.ticker).join(",")]);
+  }, [stocks.map(s => s.ticker).join(","), apiKey]);
+
+  if (status === "no-key") return (
+    <div style={{border:"1px solid #1e1e2e",borderRadius:"8px",background:"#0d0d14",padding:"40px 24px",textAlign:"center"}}>
+      <div style={{fontSize:32,marginBottom:14}}>🔑</div>
+      <div style={{fontSize:14,color:"#ffd700",fontWeight:700,marginBottom:10}}>Alpha Vantage API 키 설정 필요</div>
+      <div style={{fontSize:11,color:"#666",lineHeight:2,marginBottom:20}}>
+        오버레이 차트는 무료 주가 API 키가 필요합니다.<br/>
+        아래 순서로 1분 안에 설정할 수 있습니다.
+      </div>
+      {[
+        ["1", "alphavantage.co 에서 무료 API 키 발급", "#4a9eff"],
+        ["2", "GitHub 저장소 → Settings → Secrets → Actions", "#ffd700"],
+        ["3", "VITE_ALPHA_VANTAGE_KEY = 발급받은 키 추가", "#00ff88"],
+        ["4", "GitHub Actions 재실행 → 배포 완료", "#a855f7"],
+      ].map(([n, txt, c]) => (
+        <div key={n} style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"8px",textAlign:"left"}}>
+          <span style={{width:20,height:20,borderRadius:"50%",background:c,color:"#000",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{n}</span>
+          <span style={{fontSize:11,color:"#777"}}>{txt}</span>
+        </div>
+      ))}
+      <div style={{marginTop:16,fontSize:10,color:"#333"}}>무료 25회/일 · 5회/분 제한 · 신용카드 불필요</div>
+    </div>
+  );
 
   return (
     <div style={{border:"1px solid #1e1e2e",borderRadius:"8px",overflow:"hidden",background:"#0a0a0f",position:"relative",minHeight:500}}>
       {status === "loading" && (
         <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:10}}>
           <div style={{fontSize:28}} className="pulse">📊</div>
-          <div style={{fontSize:11,color:"#555"}}>Yahoo Finance에서 주가 데이터 불러오는 중...</div>
+          <div style={{fontSize:11,color:"#555"}}>Alpha Vantage에서 주가 데이터 불러오는 중...</div>
         </div>
       )}
       {status === "error" && (
-        <div style={{height:500,display:"flex",alignItems:"center",justifyContent:"center",color:"#ff6666",fontSize:11,gap:8}}>
-          ⚠ 데이터 로드 실패 — 잠시 후 다시 시도하세요
+        <div style={{height:500,display:"flex",alignItems:"center",justifyContent:"center",color:"#ff6666",fontSize:11}}>
+          ⚠ 로드 실패 — API 키 확인 또는 일일 25회 한도 초과
         </div>
       )}
       <div ref={containerRef} style={{height:500,visibility:status==="ready"?"visible":"hidden"}} />
