@@ -305,6 +305,44 @@ function SubLabel({ label, count, color }) {
   );
 }
 
+function CompareChart({ stocks }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    containerRef.current.innerHTML = "";
+
+    const widgetDiv = document.createElement("div");
+    widgetDiv.className = "tradingview-widget-container__widget";
+    widgetDiv.style.height = "520px";
+
+    const script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    script.async = true;
+    script.appendChild(document.createTextNode(JSON.stringify({
+      symbol: TV_SYMBOL[stocks[0].ticker] || "NASDAQ:"+stocks[0].ticker,
+      interval: "W", timezone: "Asia/Seoul", theme: "dark", style: "2",
+      locale: "kr", backgroundColor: "#0a0a0f", width: "100%", height: 520,
+      hide_top_toolbar: false, save_image: false,
+      compare_symbols: stocks.slice(1).map(st => ({
+        symbol: TV_SYMBOL[st.ticker] || "NASDAQ:"+st.ticker,
+        position: "SameScale"
+      }))
+    })));
+
+    containerRef.current.appendChild(widgetDiv);
+    containerRef.current.appendChild(script);
+
+    return () => { if (containerRef.current) containerRef.current.innerHTML = ""; };
+  }, []);
+
+  return (
+    <div ref={containerRef} className="tradingview-widget-container"
+      style={{border:"1px solid #1e1e2e",borderRadius:"8px",overflow:"hidden"}} />
+  );
+}
+
 function CompareGrid({ stocks }) {
   const chartH = stocks.length <= 2 ? 400 : 300;
   const cols = stocks.length === 1 ? "1fr" : "1fr 1fr";
@@ -328,6 +366,7 @@ function CompareView() {
   const [compareList, setCompareList] = useState([]);
   const [expandedTabs, setExpandedTabs] = useState(new Set(["physicalAI"]));
   const [expandedSectors, setExpandedSectors] = useState(new Set([]));
+  const [overlayMode, setOverlayMode] = useState(true);
 
   const toggleTab = (id) => setExpandedTabs(prev => { const n=new Set(prev); n.has(id)?n.delete(id):n.add(id); return n; });
   const toggleSector = (id) => setExpandedSectors(prev => { const n=new Set(prev); n.has(id)?n.delete(id):n.add(id); return n; });
@@ -416,17 +455,45 @@ function CompareView() {
       </div>
       {/* 오른쪽: 비교 차트 */}
       <div style={{flex:1,minWidth:0}}>
-        {compareList.length === 0
-          ? (
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"440px",background:"#0d0d14",border:"1px dashed #1e1e2e",borderRadius:"10px",gap:"12px"}}>
-              <div style={{fontSize:"36px"}}>📊</div>
-              <div style={{fontSize:"13px",color:"#555",fontWeight:600}}>종목을 선택하세요</div>
-              <div style={{fontSize:"10px",color:"#333"}}>최대 5개 · 탭/섹터별로 찾아 선택</div>
+        {compareList.length === 0 ? (
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"440px",background:"#0d0d14",border:"1px dashed #1e1e2e",borderRadius:"10px",gap:"12px"}}>
+            <div style={{fontSize:"36px"}}>📊</div>
+            <div style={{fontSize:"13px",color:"#555",fontWeight:600}}>종목을 선택하세요</div>
+            <div style={{fontSize:"10px",color:"#333"}}>최대 5개 · 탭/섹터별로 찾아 선택</div>
+          </div>
+        ) : (
+          <>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
+              <div style={{display:"flex",gap:"6px",flexWrap:"wrap"}}>
+                {compareList.map((s,i)=>(
+                  <div key={s.ticker} style={{padding:"3px 10px",background:`${COMPARE_COLORS[i]}22`,border:`1px solid ${COMPARE_COLORS[i]}55`,borderRadius:"20px",fontSize:"11px",fontWeight:700,color:COMPARE_COLORS[i]}}>
+                    {s.ticker}
+                  </div>
+                ))}
+              </div>
+              <div style={{display:"flex",gap:"4px",flexShrink:0}}>
+                <button onClick={()=>setOverlayMode(true)}
+                  style={{padding:"4px 12px",border:"1px solid",borderRadius:"5px",fontSize:"10px",fontWeight:700,cursor:"pointer",
+                    background:overlayMode?"#1a1a2e":"transparent",
+                    color:overlayMode?"#4a9eff":"#444",
+                    borderColor:overlayMode?"#4a9eff":"#333"}}>
+                  오버레이
+                </button>
+                <button onClick={()=>setOverlayMode(false)}
+                  style={{padding:"4px 12px",border:"1px solid",borderRadius:"5px",fontSize:"10px",fontWeight:700,cursor:"pointer",
+                    background:!overlayMode?"#1a1a2e":"transparent",
+                    color:!overlayMode?"#4a9eff":"#444",
+                    borderColor:!overlayMode?"#4a9eff":"#333"}}>
+                  개별
+                </button>
+              </div>
             </div>
-          ) : (
-            <CompareGrid stocks={compareList} />
-          )
-        }
+            {overlayMode
+              ? <CompareChart key={compareList.map(s=>s.ticker).join(",")} stocks={compareList} />
+              : <CompareGrid stocks={compareList} />
+            }
+          </>
+        )}
       </div>
     </div>
   );
