@@ -32,6 +32,8 @@ const VERDICT_GROUPS = (() => {
   return groups;
 })();
 
+const COMPARE_COLORS = ["#4a9eff","#ff6b6b","#ffd700","#a855f7","#00ff88"];
+
 function MetricGrid({ items, color }) {
   return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginTop:'8px' }}>
@@ -303,6 +305,148 @@ function SubLabel({ label, count, color }) {
   );
 }
 
+function CompareChart({ stocks }) {
+  const ref = useRef(null);
+  const key = stocks.map(s=>s.ticker).join(',');
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.innerHTML = "";
+    const s = document.createElement("script");
+    s.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    s.async = true;
+    s.innerHTML = JSON.stringify({
+      symbol: TV_SYMBOL[stocks[0].ticker] || "NASDAQ:"+stocks[0].ticker,
+      interval:"W", timezone:"Asia/Seoul", theme:"dark", style:"2",
+      locale:"kr", backgroundColor:"#0a0a0f", width:"100%", height:520,
+      hide_top_toolbar:false, save_image:false,
+      compare_symbols: stocks.slice(1).map(st=>({
+        symbol: TV_SYMBOL[st.ticker] || "NASDAQ:"+st.ticker,
+        position:"SameScale"
+      }))
+    });
+    ref.current.appendChild(s);
+    return () => { if (ref.current) ref.current.innerHTML = ""; };
+  }, [key]);
+  return <div style={{border:"1px solid #1e1e2e",borderRadius:"8px",overflow:"hidden"}}><div ref={ref} style={{height:520}}/></div>;
+}
+
+function CompareView() {
+  const [compareList, setCompareList] = useState([]);
+  const [expandedTabs, setExpandedTabs] = useState(new Set(["physicalAI"]));
+  const [expandedSectors, setExpandedSectors] = useState(new Set([]));
+
+  const toggleTab = (id) => setExpandedTabs(prev => { const n=new Set(prev); n.has(id)?n.delete(id):n.add(id); return n; });
+  const toggleSector = (id) => setExpandedSectors(prev => { const n=new Set(prev); n.has(id)?n.delete(id):n.add(id); return n; });
+  const toggleStock = (stock) => setCompareList(prev => {
+    if (prev.find(s=>s.ticker===stock.ticker)) return prev.filter(s=>s.ticker!==stock.ticker);
+    if (prev.length >= 5) return prev;
+    return [...prev, stock];
+  });
+  const colorOf = (ticker) => { const i=compareList.findIndex(s=>s.ticker===ticker); return i>=0?COMPARE_COLORS[i]:null; };
+  const isSelected = (ticker) => compareList.some(s=>s.ticker===ticker);
+
+  return (
+    <div style={{display:"flex",gap:"16px",alignItems:"flex-start"}}>
+      {/* 왼쪽: 종목 선택 트리 */}
+      <div style={{width:"210px",flexShrink:0}}>
+        <div style={{background:"#0d0d14",border:"1px solid #1a1a2e",borderRadius:"8px",padding:"10px",marginBottom:"10px"}}>
+          <div style={{fontSize:"9px",color:"#4a9eff",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"8px",fontWeight:700}}>
+            선택된 종목 ({compareList.length}/5)
+          </div>
+          {compareList.length===0
+            ? <div style={{fontSize:"10px",color:"#333",textAlign:"center",padding:"8px 0"}}>좌측에서 종목을 선택하세요</div>
+            : <div style={{display:"flex",flexDirection:"column",gap:"4px"}}>
+                {compareList.map((s,i)=>(
+                  <div key={s.ticker} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:`${COMPARE_COLORS[i]}11`,border:`1px solid ${COMPARE_COLORS[i]}44`,borderRadius:"5px",padding:"5px 8px"}}>
+                    <div>
+                      <span style={{fontSize:"11px",fontWeight:700,color:COMPARE_COLORS[i]}}>{s.ticker}</span>
+                      <span style={{fontSize:"9px",color:"#555",marginLeft:"5px"}}>{s.name}</span>
+                    </div>
+                    <button onClick={()=>toggleStock(s)} style={{background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:"12px",lineHeight:1,padding:"0 2px"}}>✕</button>
+                  </div>
+                ))}
+              </div>
+          }
+        </div>
+        <div style={{overflowY:"auto",maxHeight:"calc(100dvh - 360px)",display:"flex",flexDirection:"column",gap:"3px"}}>
+          {Object.values(FIELDS).map(field=>(
+            <div key={field.id}>
+              <div onClick={()=>toggleTab(field.id)}
+                style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 10px",background:"#12121a",border:"1px solid #1e1e2e",borderRadius:"6px",cursor:"pointer",userSelect:"none"}}>
+                <span style={{fontSize:"11px",fontWeight:700,color:"#aaa"}}>{field.emoji} {field.label}</span>
+                <span style={{fontSize:"9px",color:"#444"}}>{expandedTabs.has(field.id)?"▼":"▶"}</span>
+              </div>
+              {expandedTabs.has(field.id)&&(
+                <div style={{marginLeft:"8px",marginTop:"2px",display:"flex",flexDirection:"column",gap:"2px"}}>
+                  {field.sectors.map(sector=>(
+                    <div key={sector.id}>
+                      <div onClick={()=>toggleSector(sector.id)}
+                        style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 8px",background:"#0e0e16",border:"1px solid #1a1a2a",borderRadius:"5px",cursor:"pointer",userSelect:"none"}}>
+                        <span style={{fontSize:"10px",color:"#666"}}>{sector.emoji} {sector.name}</span>
+                        <span style={{display:"flex",gap:"4px",alignItems:"center"}}>
+                          <span style={{fontSize:"9px",color:"#333",background:"#1a1a1a",borderRadius:"3px",padding:"1px 4px"}}>{sector.stocks.length}</span>
+                          <span style={{fontSize:"9px",color:"#333"}}>{expandedSectors.has(sector.id)?"▼":"▶"}</span>
+                        </span>
+                      </div>
+                      {expandedSectors.has(sector.id)&&(
+                        <div style={{marginLeft:"6px",marginTop:"2px",display:"flex",flexDirection:"column",gap:"2px"}}>
+                          {sector.stocks.map(stock=>{
+                            const sel=isSelected(stock.ticker);
+                            const col=colorOf(stock.ticker);
+                            const t=TYPE[stock.type];
+                            const disabled=!sel&&compareList.length>=5;
+                            return (
+                              <div key={stock.ticker+sector.id} onClick={()=>!disabled&&toggleStock(stock)}
+                                style={{display:"flex",alignItems:"center",gap:"6px",padding:"5px 8px",borderRadius:"5px",
+                                  cursor:disabled?"not-allowed":"pointer",userSelect:"none",
+                                  background:sel?`${col}11`:"rgba(255,255,255,0.02)",
+                                  border:`1px solid ${sel?col+"55":"#151520"}`,
+                                  opacity:disabled?0.3:1,transition:"all 0.15s"}}
+                                onMouseEnter={e=>{if(!disabled)e.currentTarget.style.filter="brightness(1.4)"}}
+                                onMouseLeave={e=>e.currentTarget.style.filter="brightness(1)"}>
+                                <span style={{fontSize:"11px",color:sel?col:"#333",fontWeight:700,width:"12px",flexShrink:0}}>{sel?"✓":"○"}</span>
+                                <span style={{fontSize:"11px",fontWeight:700,color:sel?col:"#777",flex:1}}>{stock.ticker}</span>
+                                <span className="tag" style={{background:t.bg,color:t.text,fontSize:"8px",flexShrink:0}}>{t.label}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* 오른쪽: 비교 차트 */}
+      <div style={{flex:1,minWidth:0}}>
+        {compareList.length < 2
+          ? (
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"440px",background:"#0d0d14",border:"1px dashed #1e1e2e",borderRadius:"10px",gap:"12px"}}>
+              <div style={{fontSize:"36px"}}>📊</div>
+              <div style={{fontSize:"13px",color:"#555",fontWeight:600}}>종목을 2개 이상 선택하세요</div>
+              <div style={{fontSize:"10px",color:"#333"}}>최대 5개 · 탭/섹터별로 찾아 선택</div>
+            </div>
+          ) : (
+            <>
+              <div style={{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"10px"}}>
+                {compareList.map((s,i)=>(
+                  <div key={s.ticker} style={{padding:"4px 12px",background:`${COMPARE_COLORS[i]}22`,border:`1px solid ${COMPARE_COLORS[i]}66`,borderRadius:"20px",fontSize:"11px",fontWeight:700,color:COMPARE_COLORS[i]}}>
+                    {s.ticker} <span style={{fontWeight:400,opacity:0.7,fontSize:"9px"}}>{s.name}</span>
+                  </div>
+                ))}
+              </div>
+              <CompareChart stocks={compareList} />
+            </>
+          )
+        }
+      </div>
+    </div>
+  );
+}
+
 function SummaryView({ onSelectStock, selectedStock }) {
   return (
     <div>
@@ -351,11 +495,11 @@ export default function InvestmentDashboard() {
   const [activeField, setActiveField] = useState("physicalAI");
   const [activeSectorId, setActiveSectorId] = useState("chip");
   const [selectedStock, setSelectedStock] = useState(null);
-  const isSummary = activeField === "summary";
-  const field = isSummary ? null : FIELDS[activeField];
-  const activeSector = isSummary ? null : (field.sectors.find(s=>s.id===activeSectorId)||field.sectors[0]);
+  const isSpecialView = activeField === "summary" || activeField === "compare";
+  const field = isSpecialView ? null : FIELDS[activeField];
+  const activeSector = isSpecialView ? null : (field.sectors.find(s=>s.id===activeSectorId)||field.sectors[0]);
   const handleFieldChange = (fid) => {
-    if (fid === "summary") { setActiveField("summary"); setSelectedStock(null); return; }
+    if (fid === "summary" || fid === "compare") { setActiveField(fid); setSelectedStock(null); return; }
     setActiveField(fid); setActiveSectorId(FIELDS[fid].sectors[0].id); setSelectedStock(null);
   };
   return (
@@ -391,9 +535,10 @@ export default function InvestmentDashboard() {
         {Object.values(FIELDS).map(f=>(
           <button key={f.id} className={"field-tab"+(activeField===f.id?" active":"")} onClick={()=>handleFieldChange(f.id)}>{f.emoji} {f.label}</button>
         ))}
-        <button className={"field-tab"+(isSummary?" active":"")} onClick={()=>handleFieldChange("summary")} style={{marginLeft:"auto",color:isSummary?"#fff":"#4a9eff",borderBottomColor:isSummary?"#4a9eff":"transparent"}}>📊 요약</button>
+        <button className={"field-tab"+(activeField==="summary"?" active":"")} onClick={()=>handleFieldChange("summary")} style={{marginLeft:"auto",color:activeField==="summary"?"#fff":"#4a9eff",borderBottomColor:activeField==="summary"?"#4a9eff":"transparent"}}>📊 요약</button>
+        <button className={"field-tab"+(activeField==="compare"?" active":"")} onClick={()=>handleFieldChange("compare")} style={{color:activeField==="compare"?"#fff":"#ffd700",borderBottomColor:activeField==="compare"?"#ffd700":"transparent"}}>📈 비교</button>
       </div>
-      {!isSummary && (
+      {!isSpecialView && (
         <>
           <div style={{background:"linear-gradient(90deg,#1a0000,#120010)",border:"1px solid #440000",borderLeft:"4px solid #ff4444",borderRadius:"8px",padding:"13px 18px",marginBottom:"18px"}}>
             <div style={{fontSize:"10px",color:"#ff4444",letterSpacing:"2px",textTransform:"uppercase",fontWeight:"700",marginBottom:"4px"}}>⚠ 분야 레벨 바틀넥</div>
@@ -472,7 +617,8 @@ export default function InvestmentDashboard() {
           </div>
         </>
       )}
-      {isSummary && <SummaryView onSelectStock={setSelectedStock} selectedStock={selectedStock} />}
+      {activeField === "summary" && <SummaryView onSelectStock={setSelectedStock} selectedStock={selectedStock} />}
+      {activeField === "compare" && <CompareView />}
       <div style={{marginTop:"28px",borderTop:"1px solid #111",paddingTop:"14px",fontSize:"9px",color:"#2a2a2a",lineHeight:"1.8"}}>
         ※ 본 자료는 투자 참고용이며 투자 권유가 아닙니다. 종목 선택 전 반드시 개별 리서치를 병행하세요.
       </div>
