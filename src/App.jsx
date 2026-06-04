@@ -306,28 +306,54 @@ function SubLabel({ label, count, color }) {
 }
 
 function CompareChart({ stocks }) {
-  const ref = useRef(null);
-  const key = stocks.map(s=>s.ticker).join(',');
+  const uid = useRef(`tv_${Math.random().toString(36).slice(2,8)}`);
+  const divRef = useRef(null);
+
   useEffect(() => {
-    if (!ref.current) return;
-    ref.current.innerHTML = "";
-    const s = document.createElement("script");
-    s.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    s.async = true;
-    s.innerHTML = JSON.stringify({
-      symbol: TV_SYMBOL[stocks[0].ticker] || "NASDAQ:"+stocks[0].ticker,
-      interval:"W", timezone:"Asia/Seoul", theme:"dark", style:"2",
-      locale:"kr", backgroundColor:"#0a0a0f", width:"100%", height:520,
-      hide_top_toolbar:false, save_image:false,
-      compare_symbols: stocks.slice(1).map(st=>({
-        symbol: TV_SYMBOL[st.ticker] || "NASDAQ:"+st.ticker,
-        position:"SameScale"
-      }))
-    });
-    ref.current.appendChild(s);
-    return () => { if (ref.current) ref.current.innerHTML = ""; };
-  }, [key]);
-  return <div style={{border:"1px solid #1e1e2e",borderRadius:"8px",overflow:"hidden"}}><div ref={ref} style={{height:520}}/></div>;
+    if (!divRef.current) return;
+    let cancelled = false;
+
+    const init = () => {
+      if (cancelled || !divRef.current) return;
+      new window.TradingView.widget({
+        container_id: uid.current,
+        symbol: TV_SYMBOL[stocks[0].ticker] || "NASDAQ:"+stocks[0].ticker,
+        interval: "W",
+        timezone: "Asia/Seoul",
+        theme: "dark",
+        style: "2",
+        locale: "kr",
+        width: "100%",
+        height: 520,
+        hide_top_toolbar: false,
+        save_image: false,
+        compare_symbols: stocks.slice(1).map(st => ({
+          symbol: TV_SYMBOL[st.ticker] || "NASDAQ:"+st.ticker,
+          position: "SameScale"
+        }))
+      });
+    };
+
+    if (window.TradingView) {
+      init();
+    } else {
+      let tvScript = document.querySelector('script[src*="tv.js"]');
+      if (!tvScript) {
+        tvScript = document.createElement("script");
+        tvScript.src = "https://s3.tradingview.com/tv.js";
+        document.head.appendChild(tvScript);
+      }
+      tvScript.addEventListener("load", init, { once: true });
+    }
+
+    return () => { cancelled = true; };
+  }, []);
+
+  return (
+    <div style={{border:"1px solid #1e1e2e",borderRadius:"8px",overflow:"hidden"}}>
+      <div id={uid.current} ref={divRef} style={{height:520}} />
+    </div>
+  );
 }
 
 function CompareView() {
@@ -438,7 +464,7 @@ function CompareView() {
                   </div>
                 ))}
               </div>
-              <CompareChart stocks={compareList} />
+              <CompareChart key={compareList.map(s=>s.ticker).join(',')} stocks={compareList} />
             </>
           )
         }
