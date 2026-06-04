@@ -3,6 +3,12 @@ import { TV_SYMBOL } from './data/symbols';
 import { TYPE, FIELDS } from './data/fields';
 import { ANALYSIS } from './data/analysis';
 
+const now = new Date();
+const CURRENT_DATE = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}`;
+const TOTAL_ANALYZED = [...new Set(
+  Object.values(FIELDS).flatMap(f => f.sectors.flatMap(s => s.stocks.map(st => st.ticker)))
+)].length;
+
 function MetricGrid({ items, color }) {
   return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginTop:'8px' }}>
@@ -48,18 +54,6 @@ function TradingViewChart({ ticker }) {
 
 function NewsPanel({ ticker, name }) {
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || "";
-  if (!apiKey) return (
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 20px",gap:"12px",textAlign:"center"}}>
-      <div style={{fontSize:"32px"}}>🔧</div>
-      <div style={{fontSize:"13px",color:"#aaa",fontWeight:"600"}}>뉴스 기능 준비 중</div>
-      <div style={{fontSize:"11px",color:"#444",lineHeight:"1.8"}}>
-        Claude AI 뉴스 검색 기능은<br/>현재 설정 중입니다.<br/>곧 제공될 예정이에요.
-      </div>
-      <div style={{marginTop:"8px",padding:"6px 14px",background:"#1a1a2e",border:"1px solid #2a2a4a",borderRadius:"6px",fontSize:"10px",color:"#4a9eff"}}>
-        Coming Soon
-      </div>
-    </div>
-  );
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(null);
@@ -88,9 +82,21 @@ function NewsPanel({ ticker, name }) {
     }).catch(()=>setError(true)).finally(()=>setLoading(false));
   };
   useEffect(() => {
-    if (fetched === ticker) return;
+    if (!apiKey || fetched === ticker) return;
     fetchNews();
   },[ticker]);
+  if (!apiKey) return (
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 20px",gap:"12px",textAlign:"center"}}>
+      <div style={{fontSize:"32px"}}>🔧</div>
+      <div style={{fontSize:"13px",color:"#aaa",fontWeight:"600"}}>뉴스 기능 준비 중</div>
+      <div style={{fontSize:"11px",color:"#444",lineHeight:"1.8"}}>
+        Claude AI 뉴스 검색 기능은<br/>현재 설정 중입니다.<br/>곧 제공될 예정이에요.
+      </div>
+      <div style={{marginTop:"8px",padding:"6px 14px",background:"#1a1a2e",border:"1px solid #2a2a4a",borderRadius:"6px",fontSize:"10px",color:"#4a9eff"}}>
+        Coming Soon
+      </div>
+    </div>
+  );
   const sc={positive:"#00ff88",neutral:"#888",negative:"#ff4444"};
   return (
     <div>
@@ -247,7 +253,6 @@ export default function InvestmentDashboard() {
   const field = FIELDS[activeField];
   const activeSector = field.sectors.find(s=>s.id===activeSectorId)||field.sectors[0];
   const handleFieldChange = (fid) => { setActiveField(fid); setActiveSectorId(FIELDS[fid].sectors[0].id); setSelectedStock(null); };
-  const totalAnalyzed = [...new Set(Object.values(FIELDS).flatMap(f=>f.sectors.flatMap(s=>s.stocks.map(st=>st.ticker))))].length;
   return (
     <div style={{fontFamily:"'IBM Plex Mono','Courier New',monospace",background:"#0a0a0f",minHeight:"100vh",color:"#e0e0e0",padding:"24px",boxSizing:"border-box",zoom:1.25}}>
       <style>{`
@@ -272,10 +277,10 @@ export default function InvestmentDashboard() {
         <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"6px"}}>
           <span style={{fontSize:"11px",color:"#4a9eff",letterSpacing:"3px",textTransform:"uppercase"}}>Investment Analysis</span>
           <span style={{width:"8px",height:"8px",borderRadius:"50%",background:"#00ff88",display:"inline-block"}} className="pulse" />
-          <span style={{fontSize:"10px",color:"#555"}}>2026.06</span>
+          <span style={{fontSize:"10px",color:"#555"}}>{CURRENT_DATE}</span>
         </div>
         <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"26px",fontWeight:"700",color:"#fff",letterSpacing:"-0.5px"}}>AI 투자 대시보드</h1>
-        <p style={{fontSize:"11px",color:"#555",marginTop:"4px"}}>종목 클릭 → 🔍 투자 분석 · 📈 차트 · 📰 뉴스 &nbsp;|&nbsp; <span style={{color:"#00ff88"}}>전체 {totalAnalyzed}종목 분석 완료</span></p>
+        <p style={{fontSize:"11px",color:"#555",marginTop:"4px"}}>종목 클릭 → 🔍 투자 분석 · 📈 차트 · 📰 뉴스 &nbsp;|&nbsp; <span style={{color:"#00ff88"}}>전체 {TOTAL_ANALYZED}종목 분석 완료</span></p>
       </div>
       <div style={{display:"flex",borderBottom:"1px solid #1a1a1a",marginBottom:"20px",background:"#0d0d14",borderRadius:"8px 8px 0 0",padding:"0 4px"}}>
         {Object.values(FIELDS).map(f=>(
