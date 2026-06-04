@@ -12,10 +12,10 @@ const TOTAL_ANALYZED = [...new Set(
 const VERDICT_GROUPS = (() => {
   const seen = new Set();
   const groups = [
-    {color:"#00ff88",bg:"#001a0a",border:"#004020",label:"강력매수",emoji:"🟢",stocks:[]},
-    {color:"#ffd700",bg:"#1a1500",border:"#403500",label:"중립 / 관찰",emoji:"🟡",stocks:[]},
-    {color:"#a855f7",bg:"#0d0014",border:"#3b0060",label:"고위험 베팅",emoji:"🟣",stocks:[]},
-    {color:"#ff4444",bg:"#1a0000",border:"#400000",label:"주의 / 위험",emoji:"🔴",stocks:[]},
+    {color:"#00ff88",colors:["#00ff88","#00cc66"],bg:"#001a0a",border:"#004020",label:"매수",emoji:"🟢",stocks:[]},
+    {color:"#ffd700",colors:["#ffd700"],bg:"#1a1500",border:"#403500",label:"중립 / 관찰",emoji:"🟡",stocks:[]},
+    {color:"#a855f7",colors:["#a855f7"],bg:"#0d0014",border:"#3b0060",label:"고위험 베팅",emoji:"🟣",stocks:[]},
+    {color:"#ff4444",colors:["#ff4444"],bg:"#1a0000",border:"#400000",label:"주의 / 위험",emoji:"🔴",stocks:[]},
   ];
   Object.values(FIELDS).forEach(field => {
     field.sectors.forEach(sector => {
@@ -24,8 +24,8 @@ const VERDICT_GROUPS = (() => {
         seen.add(stock.ticker);
         const a = ANALYSIS[stock.ticker];
         if (!a) return;
-        const g = groups.find(g => g.color === a.verdictColor) || groups[1];
-        g.stocks.push({...stock, verdict:a.verdict, horizon:a.horizon, fieldLabel:field.label, fieldEmoji:field.emoji});
+        const g = groups.find(g => g.colors.includes(a.verdictColor)) || groups[1];
+        g.stocks.push({...stock, verdict:a.verdict, horizon:a.horizon, fieldLabel:field.label, fieldEmoji:field.emoji, verdictColor:a.verdictColor});
       });
     });
   });
@@ -312,8 +312,9 @@ function SummaryView({ onSelectStock, selectedStock }) {
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:"14px"}}>
         {VERDICT_GROUPS.map(group=>{
           const isGreen = group.color === "#00ff88";
-          const strongStocks = isGreen ? group.stocks.filter(s=>s.verdict.includes("강력")) : [];
-          const normalStocks = isGreen ? group.stocks.filter(s=>!s.verdict.includes("강력")) : group.stocks;
+          const strongStocks  = isGreen ? group.stocks.filter(s=>s.verdictColor==="#00ff88"&&s.verdict.includes("강력")) : [];
+          const longBuyStocks = isGreen ? group.stocks.filter(s=>s.verdictColor==="#00ff88"&&!s.verdict.includes("강력")) : [];
+          const buyStocks     = isGreen ? group.stocks.filter(s=>s.verdictColor==="#00cc66") : group.stocks;
           return (
             <div key={group.color} style={{background:group.bg,border:`1px solid ${group.border}`,borderTop:`3px solid ${group.color}`,borderRadius:"10px",padding:"14px"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
@@ -325,14 +326,18 @@ function SummaryView({ onSelectStock, selectedStock }) {
                 </span>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:"4px"}}>
-                {isGreen && strongStocks.length > 0 && (
+                {isGreen ? (
                   <>
-                    <SubLabel label="⭐ 강력 매수" count={strongStocks.length} color={group.color} />
+                    <SubLabel label="⭐ 강력 매수" count={strongStocks.length} color="#00ff88" />
                     {strongStocks.map(s=><StockCard key={s.ticker} s={s} group={group} selectedStock={selectedStock} onSelectStock={onSelectStock}/>)}
-                    <SubLabel label="▲ 매수" count={normalStocks.length} color={group.color} />
+                    <SubLabel label="▲ 장기 매수" count={longBuyStocks.length} color="#00ff88" />
+                    {longBuyStocks.map(s=><StockCard key={s.ticker} s={s} group={group} selectedStock={selectedStock} onSelectStock={onSelectStock}/>)}
+                    <SubLabel label="▸ 매수" count={buyStocks.length} color="#00cc66" />
+                    {buyStocks.map(s=><StockCard key={s.ticker} s={s} group={{...group,color:"#00cc66",border:"#003a20"}} selectedStock={selectedStock} onSelectStock={onSelectStock}/>)}
                   </>
+                ) : (
+                  buyStocks.map(s=><StockCard key={s.ticker} s={s} group={group} selectedStock={selectedStock} onSelectStock={onSelectStock}/>)
                 )}
-                {normalStocks.map(s=><StockCard key={s.ticker} s={s} group={group} selectedStock={selectedStock} onSelectStock={onSelectStock}/>)}
               </div>
             </div>
           );
