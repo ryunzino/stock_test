@@ -9,6 +9,29 @@ const TOTAL_ANALYZED = [...new Set(
   Object.values(FIELDS).flatMap(f => f.sectors.flatMap(s => s.stocks.map(st => st.ticker)))
 )].length;
 
+const VERDICT_GROUPS = (() => {
+  const seen = new Set();
+  const groups = [
+    {color:"#00ff88",bg:"#001a0a",border:"#004020",label:"강력매수",emoji:"🟢",stocks:[]},
+    {color:"#ffd700",bg:"#1a1500",border:"#403500",label:"중립 / 관찰",emoji:"🟡",stocks:[]},
+    {color:"#a855f7",bg:"#0d0014",border:"#3b0060",label:"고위험 베팅",emoji:"🟣",stocks:[]},
+    {color:"#ff4444",bg:"#1a0000",border:"#400000",label:"주의 / 위험",emoji:"🔴",stocks:[]},
+  ];
+  Object.values(FIELDS).forEach(field => {
+    field.sectors.forEach(sector => {
+      sector.stocks.forEach(stock => {
+        if (seen.has(stock.ticker)) return;
+        seen.add(stock.ticker);
+        const a = ANALYSIS[stock.ticker];
+        if (!a) return;
+        const g = groups.find(g => g.color === a.verdictColor) || groups[1];
+        g.stocks.push({...stock, verdict:a.verdict, horizon:a.horizon, fieldLabel:field.label, fieldEmoji:field.emoji});
+      });
+    });
+  });
+  return groups;
+})();
+
 function MetricGrid({ items, color }) {
   return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginTop:'8px' }}>
@@ -246,13 +269,64 @@ function StockDetail({ stock, onClose }) {
   );
 }
 
+function SummaryView({ onSelectStock, selectedStock }) {
+  return (
+    <div>
+      <div style={{fontSize:"11px",color:"#444",marginBottom:"18px"}}>
+        전체 <span style={{color:"#00ff88"}}>{TOTAL_ANALYZED}종목</span> 투자 평가별 분류 — 종목 클릭 시 상세 분석
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:"14px"}}>
+        {VERDICT_GROUPS.map(group=>(
+          <div key={group.color} style={{background:group.bg,border:`1px solid ${group.border}`,borderTop:`3px solid ${group.color}`,borderRadius:"10px",padding:"14px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
+              <div style={{fontSize:"10px",color:group.color,letterSpacing:"2px",textTransform:"uppercase",fontWeight:700}}>
+                {group.emoji} {group.label}
+              </div>
+              <span style={{fontSize:"10px",color:group.color,background:`${group.color}22`,padding:"2px 8px",borderRadius:"10px",fontWeight:700}}>
+                {group.stocks.length}
+              </span>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:"4px"}}>
+              {group.stocks.map(s=>(
+                <div key={s.ticker}
+                  onClick={()=>onSelectStock(s)}
+                  style={{
+                    padding:"8px 10px",borderRadius:"6px",cursor:"pointer",
+                    background:"rgba(255,255,255,0.03)",border:`1px solid ${group.border}`,
+                    borderLeft:`3px solid ${group.color}`,transition:"filter 0.15s",
+                    outline:selectedStock?.ticker===s.ticker?"2px solid #4a9eff":"none",
+                    outlineOffset:"1px",
+                  }}
+                  onMouseEnter={e=>e.currentTarget.style.filter="brightness(1.5)"}
+                  onMouseLeave={e=>e.currentTarget.style.filter="brightness(1)"}
+                >
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"2px"}}>
+                    <span style={{fontSize:"12px",fontWeight:"700",color:"#fff"}}>{s.ticker}</span>
+                    <span style={{fontSize:"8px",color:"#555"}}>{s.fieldEmoji} {s.fieldLabel}</span>
+                  </div>
+                  <div style={{fontSize:"10px",color:"#777",marginBottom:"2px"}}>{s.name}</div>
+                  <div style={{fontSize:"9px",color:group.color,opacity:0.8}}>{s.verdict} · {s.horizon}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function InvestmentDashboard() {
   const [activeField, setActiveField] = useState("physicalAI");
   const [activeSectorId, setActiveSectorId] = useState("chip");
   const [selectedStock, setSelectedStock] = useState(null);
-  const field = FIELDS[activeField];
-  const activeSector = field.sectors.find(s=>s.id===activeSectorId)||field.sectors[0];
-  const handleFieldChange = (fid) => { setActiveField(fid); setActiveSectorId(FIELDS[fid].sectors[0].id); setSelectedStock(null); };
+  const isSummary = activeField === "summary";
+  const field = isSummary ? null : FIELDS[activeField];
+  const activeSector = isSummary ? null : (field.sectors.find(s=>s.id===activeSectorId)||field.sectors[0]);
+  const handleFieldChange = (fid) => {
+    if (fid === "summary") { setActiveField("summary"); setSelectedStock(null); return; }
+    setActiveField(fid); setActiveSectorId(FIELDS[fid].sectors[0].id); setSelectedStock(null);
+  };
   return (
     <div style={{fontFamily:"'IBM Plex Mono','Courier New',monospace",background:"#0a0a0f",minHeight:"100vh",color:"#e0e0e0",padding:"24px",boxSizing:"border-box",zoom:1.25}}>
       <style>{`
@@ -282,86 +356,92 @@ export default function InvestmentDashboard() {
         <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"26px",fontWeight:"700",color:"#fff",letterSpacing:"-0.5px"}}>AI 투자 대시보드</h1>
         <p style={{fontSize:"11px",color:"#555",marginTop:"4px"}}>종목 클릭 → 🔍 투자 분석 · 📈 차트 · 📰 뉴스 &nbsp;|&nbsp; <span style={{color:"#00ff88"}}>전체 {TOTAL_ANALYZED}종목 분석 완료</span></p>
       </div>
-      <div style={{display:"flex",borderBottom:"1px solid #1a1a1a",marginBottom:"20px",background:"#0d0d14",borderRadius:"8px 8px 0 0",padding:"0 4px"}}>
+      <div style={{display:"flex",borderBottom:"1px solid #1a1a1a",marginBottom:"20px",background:"#0d0d14",borderRadius:"8px 8px 0 0",padding:"0 4px",overflowX:"auto"}}>
         {Object.values(FIELDS).map(f=>(
           <button key={f.id} className={"field-tab"+(activeField===f.id?" active":"")} onClick={()=>handleFieldChange(f.id)}>{f.emoji} {f.label}</button>
         ))}
+        <button className={"field-tab"+(isSummary?" active":"")} onClick={()=>handleFieldChange("summary")} style={{marginLeft:"auto",color:isSummary?"#fff":"#4a9eff",borderBottomColor:isSummary?"#4a9eff":"transparent"}}>📊 요약</button>
       </div>
-      <div style={{background:"linear-gradient(90deg,#1a0000,#120010)",border:"1px solid #440000",borderLeft:"4px solid #ff4444",borderRadius:"8px",padding:"13px 18px",marginBottom:"18px"}}>
-        <div style={{fontSize:"10px",color:"#ff4444",letterSpacing:"2px",textTransform:"uppercase",fontWeight:"700",marginBottom:"4px"}}>⚠ 분야 레벨 바틀넥</div>
-        <div style={{fontSize:"13px",color:"#ff9999",fontWeight:"600",marginBottom:"4px"}}>{field.fieldBottleneck.sector}</div>
-        <div style={{fontSize:"11px",color:"#777",lineHeight:"1.6"}}>{field.fieldBottleneck.reason}</div>
-      </div>
-      <div style={{display:"flex",gap:"20px",flexWrap:"wrap"}}>
-        <div style={{display:"flex",flexDirection:"column",gap:"6px",width:"168px",flexShrink:0}}>
-          <div style={{fontSize:"9px",color:"#444",letterSpacing:"2px",marginBottom:"4px",textTransform:"uppercase"}}>섹터 선택</div>
-          {field.sectors.map(s=>(
-            <button key={s.id} className={"sector-btn"+(activeSector.id===s.id?" active":"")+(s.isFieldBottleneck?" field-bn":"")} onClick={()=>{setActiveSectorId(s.id);setSelectedStock(null);}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span>{s.emoji} {s.name}</span>
-                <span style={{display:"flex",alignItems:"center",gap:"5px"}}>
-                  {s.isFieldBottleneck&&<span style={{fontSize:"9px",color:"#ff4444"}}>●</span>}
-                  <span style={{fontSize:"9px",color:"#444",background:"#1a1a1a",borderRadius:"3px",padding:"1px 5px"}}>{s.stocks.length}</span>
-                </span>
-              </div>
-            </button>
-          ))}
-          <div style={{marginTop:"14px",display:"flex",flexDirection:"column",gap:"6px"}}>
-            <div style={{fontSize:"9px",color:"#444",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"2px"}}>종목 구분</div>
-            {Object.entries(TYPE).map(([key,t])=>(
-              <div key={key} style={{display:"flex",alignItems:"center",gap:"7px"}}>
-                <span className="tag" style={{background:t.bg,color:t.text,fontSize:"9px",minWidth:"40px",textAlign:"center"}}>{t.label}</span>
-                <span style={{fontSize:"9px",color:"#444"}}>{key==="bottleneck"?"병목 장악":key==="share"?"점유율 1~2위":"고성장 소형주"}</span>
-              </div>
-            ))}
+      {!isSummary && (
+        <>
+          <div style={{background:"linear-gradient(90deg,#1a0000,#120010)",border:"1px solid #440000",borderLeft:"4px solid #ff4444",borderRadius:"8px",padding:"13px 18px",marginBottom:"18px"}}>
+            <div style={{fontSize:"10px",color:"#ff4444",letterSpacing:"2px",textTransform:"uppercase",fontWeight:"700",marginBottom:"4px"}}>⚠ 분야 레벨 바틀넥</div>
+            <div style={{fontSize:"13px",color:"#ff9999",fontWeight:"600",marginBottom:"4px"}}>{field.fieldBottleneck.sector}</div>
+            <div style={{fontSize:"11px",color:"#777",lineHeight:"1.6"}}>{field.fieldBottleneck.reason}</div>
           </div>
-        </div>
-        <div style={{flex:1,minWidth:"280px"}}>
-          <div style={{background:"#0e0e16",border:"1px solid #1e1e2e",borderRadius:"10px",padding:"16px",marginBottom:"14px"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"12px"}}>
-              <div>
-                <div style={{fontSize:"11px",color:"#4a9eff",marginBottom:"4px"}}>{activeSector.emoji} SECTOR</div>
-                <div style={{fontSize:"18px",fontWeight:"700",color:"#fff",fontFamily:"'Space Grotesk',sans-serif"}}>{activeSector.name}</div>
-              </div>
-              {activeSector.isFieldBottleneck&&<span className="tag" style={{background:"#ff4444",color:"#fff",fontSize:"9px"}}>분야 바틀넥</span>}
-            </div>
-            <div style={{background:"#060610",border:"1px solid #1a1a30",borderLeft:"3px solid #ffd700",borderRadius:"6px",padding:"12px"}}>
-              <div style={{fontSize:"9px",color:"#ffd700",letterSpacing:"2px",marginBottom:"6px",textTransform:"uppercase"}}>섹터 바틀넥</div>
-              <div style={{fontSize:"13px",color:"#ffd700",fontWeight:"600",marginBottom:"6px"}}>{activeSector.bottleneck}</div>
-              <div style={{fontSize:"11px",color:"#666",lineHeight:"1.7"}}>{activeSector.bottleneckDetail}</div>
-            </div>
-          </div>
-          <div style={{fontSize:"10px",color:"#444",marginBottom:"10px"}}>👆 종목 클릭 → 투자 분석 · 차트 · 뉴스</div>
-          {["bottleneck","share","emerging"].map(typeKey=>{
-            const t=TYPE[typeKey];
-            const stocks=activeSector.stocks.filter(s=>s.type===typeKey);
-            if(!stocks.length) return null;
-            return (
-              <div key={typeKey}>
-                <div className="type-label" style={{color:t.bg}}>
-                  <span className="tag" style={{background:t.bg,color:t.text,fontSize:"9px"}}>{t.label}</span>
-                  <span style={{fontSize:"9px"}}>{typeKey==="bottleneck"?"병목 장악 종목":typeKey==="share"?"점유율 기반 종목":"미래 유망 소형주"}</span>
-                </div>
-                {stocks.map(s=>(
-                  <div key={s.ticker+s.name} className={"stock-row"+(selectedStock&&selectedStock.ticker===s.ticker&&selectedStock.name===s.name?" selected":"")}
-                    style={{background:t.rowBg,borderColor:selectedStock&&selectedStock.ticker===s.ticker&&selectedStock.name===s.name?"#4a9eff":t.rowBorder,borderLeftWidth:"3px",borderLeftColor:t.rowAccent}}
-                    onClick={()=>setSelectedStock(s)}>
-                    <div>
-                      <div style={{fontSize:"14px",fontWeight:"700",color:"#fff"}}>{s.ticker}</div>
-                      <div style={{fontSize:"9px",color:"#444",marginTop:"2px"}}>{s.exchange}</div>
-                    </div>
-                    <div>
-                      <div style={{fontSize:"12px",color:t.nameColor,fontWeight:"600",marginBottom:"3px"}}>{s.name}</div>
-                      <div style={{fontSize:"10px",color:"#555",lineHeight:"1.5"}}>{s.role}</div>
-                    </div>
-                    <div style={{fontSize:"10px",color:"#4a5568",lineHeight:"1.5"}}>{s.note}</div>
+          <div style={{display:"flex",gap:"20px",flexWrap:"wrap"}}>
+            <div style={{display:"flex",flexDirection:"column",gap:"6px",width:"168px",flexShrink:0}}>
+              <div style={{fontSize:"9px",color:"#444",letterSpacing:"2px",marginBottom:"4px",textTransform:"uppercase"}}>섹터 선택</div>
+              {field.sectors.map(s=>(
+                <button key={s.id} className={"sector-btn"+(activeSector.id===s.id?" active":"")+(s.isFieldBottleneck?" field-bn":"")} onClick={()=>{setActiveSectorId(s.id);setSelectedStock(null);}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <span>{s.emoji} {s.name}</span>
+                    <span style={{display:"flex",alignItems:"center",gap:"5px"}}>
+                      {s.isFieldBottleneck&&<span style={{fontSize:"9px",color:"#ff4444"}}>●</span>}
+                      <span style={{fontSize:"9px",color:"#444",background:"#1a1a1a",borderRadius:"3px",padding:"1px 5px"}}>{s.stocks.length}</span>
+                    </span>
+                  </div>
+                </button>
+              ))}
+              <div style={{marginTop:"14px",display:"flex",flexDirection:"column",gap:"6px"}}>
+                <div style={{fontSize:"9px",color:"#444",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"2px"}}>종목 구분</div>
+                {Object.entries(TYPE).map(([key,t])=>(
+                  <div key={key} style={{display:"flex",alignItems:"center",gap:"7px"}}>
+                    <span className="tag" style={{background:t.bg,color:t.text,fontSize:"9px",minWidth:"40px",textAlign:"center"}}>{t.label}</span>
+                    <span style={{fontSize:"9px",color:"#444"}}>{key==="bottleneck"?"병목 장악":key==="share"?"점유율 1~2위":"고성장 소형주"}</span>
                   </div>
                 ))}
               </div>
-            );
-          })}
-        </div>
-      </div>
+            </div>
+            <div style={{flex:1,minWidth:"280px"}}>
+              <div style={{background:"#0e0e16",border:"1px solid #1e1e2e",borderRadius:"10px",padding:"16px",marginBottom:"14px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"12px"}}>
+                  <div>
+                    <div style={{fontSize:"11px",color:"#4a9eff",marginBottom:"4px"}}>{activeSector.emoji} SECTOR</div>
+                    <div style={{fontSize:"18px",fontWeight:"700",color:"#fff",fontFamily:"'Space Grotesk',sans-serif"}}>{activeSector.name}</div>
+                  </div>
+                  {activeSector.isFieldBottleneck&&<span className="tag" style={{background:"#ff4444",color:"#fff",fontSize:"9px"}}>분야 바틀넥</span>}
+                </div>
+                <div style={{background:"#060610",border:"1px solid #1a1a30",borderLeft:"3px solid #ffd700",borderRadius:"6px",padding:"12px"}}>
+                  <div style={{fontSize:"9px",color:"#ffd700",letterSpacing:"2px",marginBottom:"6px",textTransform:"uppercase"}}>섹터 바틀넥</div>
+                  <div style={{fontSize:"13px",color:"#ffd700",fontWeight:"600",marginBottom:"6px"}}>{activeSector.bottleneck}</div>
+                  <div style={{fontSize:"11px",color:"#666",lineHeight:"1.7"}}>{activeSector.bottleneckDetail}</div>
+                </div>
+              </div>
+              <div style={{fontSize:"10px",color:"#444",marginBottom:"10px"}}>👆 종목 클릭 → 투자 분석 · 차트 · 뉴스</div>
+              {["bottleneck","share","emerging"].map(typeKey=>{
+                const t=TYPE[typeKey];
+                const stocks=activeSector.stocks.filter(s=>s.type===typeKey);
+                if(!stocks.length) return null;
+                return (
+                  <div key={typeKey}>
+                    <div className="type-label" style={{color:t.bg}}>
+                      <span className="tag" style={{background:t.bg,color:t.text,fontSize:"9px"}}>{t.label}</span>
+                      <span style={{fontSize:"9px"}}>{typeKey==="bottleneck"?"병목 장악 종목":typeKey==="share"?"점유율 기반 종목":"미래 유망 소형주"}</span>
+                    </div>
+                    {stocks.map(s=>(
+                      <div key={s.ticker+s.name} className={"stock-row"+(selectedStock&&selectedStock.ticker===s.ticker&&selectedStock.name===s.name?" selected":"")}
+                        style={{background:t.rowBg,borderColor:selectedStock&&selectedStock.ticker===s.ticker&&selectedStock.name===s.name?"#4a9eff":t.rowBorder,borderLeftWidth:"3px",borderLeftColor:t.rowAccent}}
+                        onClick={()=>setSelectedStock(s)}>
+                        <div>
+                          <div style={{fontSize:"14px",fontWeight:"700",color:"#fff"}}>{s.ticker}</div>
+                          <div style={{fontSize:"9px",color:"#444",marginTop:"2px"}}>{s.exchange}</div>
+                        </div>
+                        <div>
+                          <div style={{fontSize:"12px",color:t.nameColor,fontWeight:"600",marginBottom:"3px"}}>{s.name}</div>
+                          <div style={{fontSize:"10px",color:"#555",lineHeight:"1.5"}}>{s.role}</div>
+                        </div>
+                        <div style={{fontSize:"10px",color:"#4a5568",lineHeight:"1.5"}}>{s.note}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+      {isSummary && <SummaryView onSelectStock={setSelectedStock} selectedStock={selectedStock} />}
       <div style={{marginTop:"28px",borderTop:"1px solid #111",paddingTop:"14px",fontSize:"9px",color:"#2a2a2a",lineHeight:"1.8"}}>
         ※ 본 자료는 투자 참고용이며 투자 권유가 아닙니다. 종목 선택 전 반드시 개별 리서치를 병행하세요.
       </div>
