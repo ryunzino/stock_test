@@ -124,6 +124,15 @@ export const FIELDS = {
           {ticker:"INTC",name:"Intel",exchange:"NASDAQ",role:"파운드리 전환(18A 공정), x86 CPU 1위 재건",note:"Intel Foundry 18A 공정 TSMC 경쟁 시도, 리스크 높음",type:"share"},
           {ticker:"AEHR",name:"Aehr Test Systems",exchange:"NASDAQ",role:"SiC·GaN 파워 반도체 웨이퍼 번인 테스트 장비",note:"EV·AI 파워 반도체 검증 필수 장비, 소형 고성장",type:"emerging"},
         ]},
+      {id:"cloudCompute",name:"AI 클라우드 / GPU 컴퓨팅",emoji:"☁️",isFieldBottleneck:false,bottleneck:"H100/H200 GPU 선확보 — 클라우드 AI 역량의 직접 결정 변수",bottleneckDetail:"빅테크 중 GPU 물량을 얼마나 확보했는지가 AI 서비스 공급 능력을 결정. NVDA가 배분권을 쥐고, MSFT·GOOGL·AMZN이 경쟁적으로 확보 중",
+        stocks:[
+          {ticker:"NVDA",name:"NVIDIA",exchange:"NASDAQ",role:"H100/H200 배분 통제 — 전체 클라우드 AI 공급량 결정",note:"AI GPU 85~92% 점유, 클라우드 사업자 공급 우선순위 결정권 보유",type:"bottleneck"},
+          {ticker:"MSFT",name:"Microsoft",exchange:"NASDAQ",role:"Azure AI — OpenAI 독점 파트너십, GPU 최우선 배분 확보",note:"OpenAI 파트너십으로 H100 최대 확보, Azure AI 매출 급성장",type:"share"},
+          {ticker:"AMZN",name:"Amazon",exchange:"NASDAQ",role:"AWS 최대 클라우드 점유율 31%, Trainium2 자체 AI 칩 개발",note:"클라우드 점유율 31%, Trainium2로 NVDA 의존도 탈피 중",type:"share"},
+          {ticker:"GOOGL",name:"Alphabet (Google)",exchange:"NASDAQ",role:"GCP + TPU v5 자체 설계, 빅테크 중 NVDA 의존도 최소",note:"자체 TPU로 H100 비용 절감, Gemini+GCP 통합 수혜",type:"share"},
+          {ticker:"CRWV",name:"CoreWeave",exchange:"NASDAQ",role:"순수 GPU 클라우드, NVIDIA 전략 파트너 — AI 스타트업 수요 흡수",note:"2025년 IPO, MS $30억+ 계약, H100/H200 대규모 확보",type:"emerging"},
+          {ticker:"HPE",name:"Hewlett Packard Enterprise",exchange:"NYSE",role:"Cray 슈퍼컴퓨터 + 엔터프라이즈 온프레미스 AI 인프라",note:"미국 정부·연구기관 HPC 독점 공급, GreenLake 구독 전환",type:"emerging"},
+        ]},
     ],
   },
   space: {
