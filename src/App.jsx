@@ -342,7 +342,9 @@ function CompareChart({ stocks }) {
           layout: { background: { type: ColorType.Solid, color: "#0a0a0f" }, textColor: "#888" },
           grid: { vertLines: { color: "#151520" }, horzLines: { color: "#151520" } },
           rightPriceScale: { borderColor: "#1a1a2a" },
-          timeScale: { borderColor: "#1a1a2a", timeVisible: false },
+          timeScale: { borderColor: "#1a1a2a", timeVisible: true, fixLeftEdge: false, fixRightEdge: false },
+          handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true },
+          handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
         });
         chartRef.current = chart;
 
