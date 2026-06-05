@@ -315,8 +315,11 @@ const loadStockData = () => {
 };
 
 function CompareChart({ stocks }) {
+  const wrapperRef = useRef(null);
   const containerRef = useRef(null);
   const chartRef = useRef(null);
+  const selectionRef = useRef(null);
+  const dragRef = useRef(null);
   const [status, setStatus] = useState("loading");
 
   useEffect(() => {
@@ -379,6 +382,51 @@ function CompareChart({ stocks }) {
         };
         window.addEventListener("keydown", handleKey);
         containerRef.current._keyHandler = handleKey;
+
+        // 오른쪽 버튼 드래그 → 영역 줌인
+        const wrapper = wrapperRef.current;
+        const onContextMenu = (e) => e.preventDefault();
+        const onMouseDown = (e) => {
+          if (e.button !== 2) return;
+          e.preventDefault();
+          const rect = containerRef.current.getBoundingClientRect();
+          dragRef.current = { startX: e.clientX - rect.left };
+          if (selectionRef.current) Object.assign(selectionRef.current.style, { display:"block", left: dragRef.current.startX+"px", width:"0px" });
+        };
+        const onMouseMove = (e) => {
+          if (!dragRef.current || !selectionRef.current) return;
+          const rect = containerRef.current.getBoundingClientRect();
+          const cur = e.clientX - rect.left;
+          const sx = dragRef.current.startX;
+          Object.assign(selectionRef.current.style, { left: Math.min(sx,cur)+"px", width: Math.abs(cur-sx)+"px" });
+        };
+        const onMouseUp = (e) => {
+          if (!dragRef.current) return;
+          if (e.button === 2 && chartRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const endX = e.clientX - rect.left;
+            const minX = Math.min(dragRef.current.startX, endX);
+            const maxX = Math.max(dragRef.current.startX, endX);
+            if (maxX - minX > 10) {
+              const ts = chartRef.current.timeScale();
+              const from = ts.coordinateToLogical(minX);
+              const to = ts.coordinateToLogical(maxX);
+              if (from !== null && to !== null) ts.setVisibleLogicalRange({ from, to });
+            }
+          }
+          dragRef.current = null;
+          if (selectionRef.current) selectionRef.current.style.display = "none";
+        };
+        wrapper.addEventListener("contextmenu", onContextMenu);
+        wrapper.addEventListener("mousedown", onMouseDown);
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+        containerRef.current._dragCleanup = () => {
+          wrapper.removeEventListener("contextmenu", onContextMenu);
+          wrapper.removeEventListener("mousedown", onMouseDown);
+          window.removeEventListener("mousemove", onMouseMove);
+          window.removeEventListener("mouseup", onMouseUp);
+        };
         setStatus("ready");
       })
       .catch(() => { if (!cancelled) setStatus("error"); });
@@ -387,12 +435,13 @@ function CompareChart({ stocks }) {
       cancelled = true;
       containerRef.current?._ro?.disconnect();
       if (containerRef.current?._keyHandler) window.removeEventListener("keydown", containerRef.current._keyHandler);
+      containerRef.current?._dragCleanup?.();
       if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
     };
   }, [stocks.map(s => s.ticker).join(",")]);
 
   return (
-    <div style={{border:"1px solid #1e1e2e",borderRadius:"8px",overflow:"hidden",background:"#0a0a0f",position:"relative",minHeight:500}}>
+    <div ref={wrapperRef} style={{border:"1px solid #1e1e2e",borderRadius:"8px",overflow:"hidden",background:"#0a0a0f",position:"relative",minHeight:500}}>
       {status === "loading" && (
         <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:10}}>
           <div style={{fontSize:28}} className="pulse">📊</div>
@@ -405,9 +454,10 @@ function CompareChart({ stocks }) {
         </div>
       )}
       <div ref={containerRef} style={{height:500,visibility:status==="ready"?"visible":"hidden"}} />
+      <div ref={selectionRef} style={{display:"none",position:"absolute",top:0,height:500,background:"rgba(74,158,255,0.12)",borderLeft:"1px solid rgba(74,158,255,0.5)",borderRight:"1px solid rgba(74,158,255,0.5)",pointerEvents:"none",zIndex:5}} />
       {status === "ready" && (
         <div style={{display:"flex",gap:12,padding:"6px 12px",borderTop:"1px solid #1a1a2a",background:"#0a0a0f"}}>
-          {[["←→","이동"],["+ -","확대/축소"],["F","전체보기"],["🖱휠","확대/축소"],["드래그","이동"]].map(([k,v]) => (
+          {[["←→","이동"],["+ -","확대/축소"],["F","전체보기"],["🖱휠","확대/축소"],["우클릭드래그","영역줌인"]].map(([k,v]) => (
             <span key={k} style={{fontSize:10,color:"#444"}}>
               <kbd style={{background:"#1a1a2a",color:"#888",padding:"1px 5px",borderRadius:3,fontFamily:"monospace",fontSize:10}}>{k}</kbd>
               {" "}{v}
