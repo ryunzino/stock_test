@@ -329,15 +329,15 @@ function CompareChart({ stocks }) {
     if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
 
     const fetchStock = (ticker) =>
-      fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY_ADJUSTED&symbol=${toAVSym(ticker)}&apikey=${apiKey}`)
+      fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY&symbol=${toAVSym(ticker)}&apikey=${apiKey}`)
         .then(r => { if (!r.ok) throw new Error(); return r.json(); })
         .then(json => {
-          const weekly = json["Weekly Adjusted Time Series"];
+          const weekly = json["Weekly Time Series"];
           if (!weekly) throw new Error("no data");
           return Object.entries(weekly)
             .map(([date, v]) => ({
               time: Math.floor(new Date(date).getTime() / 1000),
-              value: parseFloat(v["5. adjusted close"])
+              value: parseFloat(v["4. close"])
             }))
             .filter(d => !isNaN(d.value))
             .sort((a, b) => a.time - b.time)
