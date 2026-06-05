@@ -306,20 +306,18 @@ function SubLabel({ label, count, color }) {
   );
 }
 
+let _stockDataCache = null;
+const loadStockData = () => {
+  if (_stockDataCache) return Promise.resolve(_stockDataCache);
+  return fetch(`${import.meta.env.BASE_URL}stockdata.json`)
+    .then(r => { if (!r.ok) throw new Error("stockdata.json not found"); return r.json(); })
+    .then(d => { _stockDataCache = d; return d; });
+};
+
 function CompareChart({ stocks }) {
   const containerRef = useRef(null);
   const chartRef = useRef(null);
   const [status, setStatus] = useState("loading");
-
-  const toFMPSym = (ticker) => {
-    const tv = TV_SYMBOL[ticker];
-    if (!tv) return ticker;
-    const [ex, sym] = tv.split(":");
-    if (ex === "KRX") return sym + ".KS";
-    if (ex === "TSE") return sym + ".T";
-    if (ex === "HKEX") return sym + ".HK";
-    return sym;
-  };
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -328,16 +326,11 @@ function CompareChart({ stocks }) {
     if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
 
     const fetchStock = (ticker) =>
-      fetch(`https://financialmodelingprep.com/api/v3/historical-price-full/${toFMPSym(ticker)}?timeseries=60&apikey=demo`)
-        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-        .then(json => {
-          const hist = json.historical;
-          if (!hist?.length) throw new Error("no data");
-          return hist
-            .map(d => ({ time: Math.floor(new Date(d.date).getTime() / 1000), value: d.close }))
-            .filter(d => !isNaN(d.value) && d.value > 0)
-            .sort((a, b) => a.time - b.time);
-        });
+      loadStockData().then(data => {
+        const raw = data[ticker];
+        if (!raw?.length) throw new Error(`No data: ${ticker}`);
+        return raw.sort((a, b) => a.time - b.time);
+      });
 
     Promise.all(stocks.map(s => fetchStock(s.ticker)))
       .then(allData => {
