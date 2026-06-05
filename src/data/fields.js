@@ -329,4 +329,30 @@ export const FIELDS = {
         ]},
     ],
   },
+  quantum:{
+    id:"quantum", label:"양자 컴퓨팅", emoji:"⚛️",
+    fieldBottleneck:{
+      sector:"큐비트 오류율 · 양자 오류 수정(QEC)",
+      reason:"양자컴퓨터 상업화의 관문은 큐비트 수가 아닌 오류율이다. 실용적 QEC를 먼저 구현한 기업이 양자 인프라 바틀넥을 장악한다."
+    },
+    sectors:[
+      {id:"quantumPure",name:"퓨어플레이 양자 하드웨어",emoji:"🔬",isFieldBottleneck:true,
+       bottleneck:"큐비트 충실도 · 오류 수정 기술",
+       bottleneckDetail:"이온 트랩(IonQ), 초전도(Rigetti), 어닐링(D-Wave), 포토닉스(QUBT) 방식이 경쟁 중. 실용적 QEC 달성이 시장 승자를 결정한다.",
+       stocks:[
+         {ticker:"IONQ",name:"IonQ",exchange:"NASDAQ",role:"이온 트랩 방식 선도 — 알고리즘 큐비트(AQ) 품질 업계 최고",note:"35→64 AQ 로드맵, 미군·아마존·현대 계약",type:"bottleneck"},
+         {ticker:"RGTI",name:"Rigetti Computing",exchange:"NASDAQ",role:"초전도 방식 클라우드 양자컴퓨팅",note:"79큐비트, AWS·Azure 파트너십",type:"share"},
+         {ticker:"QBTS",name:"D-Wave Quantum",exchange:"NYSE",role:"양자 어닐링 — 최적화 문제 상업화 선두",note:"VW·NTT 등 상업 고객 보유, 퓨어플레이 중 가장 빠른 수익화",type:"share"},
+         {ticker:"QUBT",name:"Quantum Computing Inc",exchange:"NASDAQ",role:"포토닉스 기반 양자 — 상온 동작 가능성",note:"극고위험 소형주, 기술 성공 시 폭발적 업사이드",type:"emerging"},
+       ]},
+      {id:"quantumBigTech",name:"빅테크 양자 플랫폼",emoji:"🏛️",isFieldBottleneck:false,
+       bottleneck:"양자 클라우드 생태계 · 개발자 플랫폼 락인",
+       bottleneckDetail:"IBM Qiskit·Google Cirq가 양자 소프트웨어 표준을 두고 경쟁. 개발자 생태계를 먼저 장악한 플랫폼이 양자 클라우드 시장을 지배한다.",
+       stocks:[
+         {ticker:"IBM",name:"IBM",exchange:"NYSE",role:"가장 성숙한 양자 에코시스템 — Qiskit + 400큐비트 Condor",note:"200+ 파트너 네트워크, 2025년 100K큐비트 로드맵",type:"bottleneck"},
+         {ticker:"GOOGL",name:"Alphabet",exchange:"NASDAQ",role:"Willow 양자칩 — 오류 수정 비약적 성과(2024)",note:"Willow로 기존 대비 오류율 100배 개선 발표",type:"share"},
+         {ticker:"MSFT",name:"Microsoft",exchange:"NASDAQ",role:"토폴로지컬 큐비트(마요라나) + Azure Quantum",note:"독자적 큐비트 방식, Azure 생태계 연동",type:"share"},
+       ]},
+    ]
+  },
 };
