@@ -329,6 +329,72 @@ export const FIELDS = {
         ]},
     ],
   },
+  nuclear:{
+    id:"nuclear", label:"핵에너지 & AI 전력", emoji:"🔋",
+    fieldBottleneck:{
+      sector:"전력망 & AI 데이터센터 전력 공급",
+      reason:"AI 데이터센터의 전력 수요 폭증으로 전력망이 새로운 병목으로 부상. 24/7 무탄소 전력을 안정 공급할 수 있는 원자력이 유일한 현실적 대안이며, 우라늄 공급망과 전력 인프라 기업이 이 병목을 장악한다."
+    },
+    sectors:[
+      {id:"nuclearPower", name:"원자력 발전 & PPA", emoji:"⚡", isFieldBottleneck:true,
+       bottleneck:"AI 데이터센터 전력 직공급 계약(PPA)",
+       bottleneckDetail:"마이크로소프트·구글·아마존이 원자력 PPA를 경쟁적으로 체결 중. 24/7 무탄소 전력 공급 가능한 원전 운영사가 AI 인프라 전력 바틀넥을 장악.",
+       stocks:[
+         {ticker:"CEG", name:"Constellation Energy", exchange:"NASDAQ", role:"미국 최대 원전 운영사 — Microsoft·구글 AI PPA 체결", note:"Three Mile Island 재가동, 데이터센터 PPA 파이프라인 급증", type:"bottleneck"},
+         {ticker:"VST", name:"Vistra Energy", exchange:"NYSE", role:"텍사스 최대 전력 생산사 — 원전+가스 복합 포트폴리오", note:"2024년 S&P500 최고 수익률 종목, 원전 수명 연장 가속", type:"share"},
+         {ticker:"NRG", name:"NRG Energy", exchange:"NYSE", role:"전력 소매·도매 통합 — 데이터센터 직공급 확대", note:"가정·기업 전력 소매 + 데이터센터 전력 계약 확대", type:"share"},
+       ]},
+      {id:"uraniumSupply", name:"우라늄 공급망", emoji:"☢️", isFieldBottleneck:false,
+       bottleneck:"우라늄 농축 기술 & 공급 독점",
+       bottleneckDetail:"원전 확대에 따라 우라늄 수요 급증. 특히 미국 내 농축 능력은 Centrus(LEU)가 유일. 러시아산 우라늄 수입 금지로 서방 공급망 재편 중.",
+       stocks:[
+         {ticker:"CCJ", name:"Cameco", exchange:"NYSE", role:"글로벌 최대 우라늄 광산업체 — 생산량 세계 2위", note:"카자흐스탄·캐나다 광산, 2030년까지 생산 계약 완료", type:"bottleneck"},
+         {ticker:"LEU", name:"Centrus Energy", exchange:"NYSE", role:"미국 유일 우라늄 농축업체 — HALEU 생산권 독점", note:"미 에너지부 독점 계약, 소형 모듈 원자로(SMR) 연료 공급", type:"bottleneck"},
+         {ticker:"UEC", name:"Uranium Energy Corp", exchange:"AMEX", role:"미국·캐나다 우라늄 탐사·생산 — 저비용 ISR 방식", note:"생산 재개 시 마진 높음, 우라늄 가격 상승 레버리지", type:"emerging"},
+         {ticker:"OKLO", name:"Oklo", exchange:"NYSE", role:"차세대 소형 모듈 원자로(SMR) — 샘 알트만 이사회", note:"빌 게이츠·샘 알트만 지지, 2027년 첫 원자로 허가 목표", type:"emerging"},
+       ]},
+      {id:"powerInfra", name:"전력망 & 데이터센터 인프라", emoji:"🔌", isFieldBottleneck:false,
+       bottleneck:"전력 변환·냉각·배전 장비 공급 과점",
+       bottleneckDetail:"데이터센터 전력 수요 급증으로 변압기·UPS·냉각 장비 공급 부족. ETN·VRT·GEV가 2~3년 주문 잔고를 보유하며 공급 병목 장악.",
+       stocks:[
+         {ticker:"ETN", name:"Eaton Corporation", exchange:"NYSE", role:"전력 관리·배전 장비 — 데이터센터 전력 인프라 과점", note:"2~3년치 주문 잔고, AI 데이터센터 수혜 최대주", type:"bottleneck"},
+         {ticker:"VRT", name:"Vertiv Holdings", exchange:"NYSE", role:"데이터센터 냉각·전력 인프라 전문 — 하이퍼스케일러 공급", note:"액체냉각(Direct Liquid Cooling) 수요 폭증, NVIDIA와 협력", type:"bottleneck"},
+         {ticker:"GEV", name:"GE Vernova", exchange:"NYSE", role:"가스터빈·전력망 장비 — 에너지 전환 핵심 공급업체", note:"GE에서 분사(2024), 가스터빈 글로벌 과점, 풍력·그리드 솔루션", type:"share"},
+         {ticker:"PWR", name:"Quanta Services", exchange:"NYSE", role:"전력망·통신 인프라 시공 — 미국 1위 전선 시공사", note:"전력망 현대화·재생에너지 연결 공사 수요 급증", type:"share"},
+       ]},
+    ]
+  },
+  cyber:{
+    id:"cyber", label:"사이버보안", emoji:"🌐",
+    fieldBottleneck:{
+      sector:"AI 기반 통합 보안 플랫폼 (XDR/SIEM 통합)",
+      reason:"AI 고도화로 사이버 공격이 정교해지면서 단일 벤더 통합 플랫폼이 업계 표준이 되고 있다. 가장 많은 데이터로 AI 모델을 훈련한 플랫폼이 탐지 정확도에서 압도적 우위를 점하며 시장을 독식한다."
+    },
+    sectors:[
+      {id:"cyberPlatform", name:"AI 통합 보안 플랫폼", emoji:"🛡️", isFieldBottleneck:true,
+       bottleneck:"AI 위협 탐지 데이터 독점 & 플랫폼 락인",
+       bottleneckDetail:"CrowdStrike·Palo Alto는 수억 개 엔드포인트 데이터로 AI를 훈련. 데이터가 많을수록 탐지율 상승 → 고객 증가 → 더 많은 데이터의 선순환. 후발주자가 따라잡기 불가.",
+       stocks:[
+         {ticker:"CRWD", name:"CrowdStrike", exchange:"NASDAQ", role:"AI 기반 엔드포인트 보안 1위 — Falcon 플랫폼 통합 확장", note:"ARR $4B+, NRR 120%+, 플랫폼 모듈 확장으로 락인 강화", type:"bottleneck"},
+         {ticker:"PANW", name:"Palo Alto Networks", exchange:"NASDAQ", role:"통합 사이버보안 플랫폼 1위 — 네트워크·클라우드·SOC 통합", note:"플랫폼화 전략 가속, Cortex XDR·SASE 통합으로 경쟁사 대체", type:"bottleneck"},
+       ]},
+      {id:"zeroTrust", name:"제로트러스트 & 클라우드 보안", emoji:"☁️", isFieldBottleneck:false,
+       bottleneck:"클라우드 네이티브 SASE·ZTNA 플랫폼",
+       bottleneckDetail:"재택근무·클라우드 전환으로 전통 방화벽 무력화. ZTNA(Zero Trust Network Access)와 SASE(클라우드 기반 보안) 전환이 필수화되며 ZS·OKTA가 이 전환의 수혜를 독점.",
+       stocks:[
+         {ticker:"ZS", name:"Zscaler", exchange:"NASDAQ", role:"클라우드 보안 게이트웨이 1위 — SASE·ZIA 플랫폼", note:"ZIA+ZPA 통합으로 기업 전체 트래픽 인라인 검사, ARR $3B+", type:"bottleneck"},
+         {ticker:"OKTA", name:"Okta", exchange:"NASDAQ", role:"아이덴티티 & 접근 관리(IAM) 1위 — Zero Trust 기반", note:"AI 기반 접근 이상 탐지 강화, 기업 IAM 시장 1위", type:"share"},
+       ]},
+      {id:"endpoint", name:"엔드포인트 & 위협 인텔리전스", emoji:"🔍", isFieldBottleneck:false,
+       bottleneck:"AI 위협 인텔리전스 & 자동화 대응",
+       bottleneckDetail:"EDR(엔드포인트 탐지·대응)을 넘어 XDR(확장 탐지·대응)로 진화 중. AI 자동화 대응 속도가 핵심 경쟁력.",
+       stocks:[
+         {ticker:"S", name:"SentinelOne", exchange:"NASDAQ", role:"자율형 AI 엔드포인트 보안 — 사람 개입 없는 자동 대응", note:"Purple AI 에이전트, 완전 자동화 XDR, ARR $1B+ 돌파", type:"share"},
+         {ticker:"FTNT", name:"Fortinet", exchange:"NASDAQ", role:"네트워크 방화벽·SD-WAN 통합 — 중소기업~대기업 풀커버", note:"FortiGate ASIC 자체 칩으로 경쟁사 대비 3배 처리성능, 마진 업계 최고", type:"share"},
+         {ticker:"CYBR", name:"CyberArk", exchange:"NASDAQ", role:"특권 계정 관리(PAM) 1위 — 내부자 위협·자격증명 도용 방어", note:"AI 에이전트 급증으로 머신 아이덴티티 보안 수요 폭증 직접 수혜", type:"bottleneck"},
+       ]},
+    ]
+  },
   quantum:{
     id:"quantum", label:"양자 컴퓨팅", emoji:"⚛️",
     fieldBottleneck:{
