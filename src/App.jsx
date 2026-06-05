@@ -363,6 +363,22 @@ function CompareChart({ stocks }) {
         });
         ro.observe(containerRef.current);
         containerRef.current._ro = ro;
+
+        const handleKey = (e) => {
+          if (!chartRef.current) return;
+          const ts = chartRef.current.timeScale();
+          const range = ts.getVisibleLogicalRange();
+          if (!range) return;
+          const span = range.to - range.from;
+          const center = (range.from + range.to) / 2;
+          if (e.key === "ArrowLeft")      ts.setVisibleLogicalRange({ from: range.from - span*0.15, to: range.to - span*0.15 });
+          else if (e.key === "ArrowRight") ts.setVisibleLogicalRange({ from: range.from + span*0.15, to: range.to + span*0.15 });
+          else if (e.key === "+" || e.key === "=") ts.setVisibleLogicalRange({ from: center - span*0.35, to: center + span*0.35 });
+          else if (e.key === "-")          ts.setVisibleLogicalRange({ from: center - span*0.65, to: center + span*0.65 });
+          else if (e.key === "f" || e.key === "F") ts.fitContent();
+        };
+        window.addEventListener("keydown", handleKey);
+        containerRef.current._keyHandler = handleKey;
         setStatus("ready");
       })
       .catch(() => { if (!cancelled) setStatus("error"); });
@@ -370,6 +386,7 @@ function CompareChart({ stocks }) {
     return () => {
       cancelled = true;
       containerRef.current?._ro?.disconnect();
+      if (containerRef.current?._keyHandler) window.removeEventListener("keydown", containerRef.current._keyHandler);
       if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
     };
   }, [stocks.map(s => s.ticker).join(",")]);
@@ -388,6 +405,16 @@ function CompareChart({ stocks }) {
         </div>
       )}
       <div ref={containerRef} style={{height:500,visibility:status==="ready"?"visible":"hidden"}} />
+      {status === "ready" && (
+        <div style={{display:"flex",gap:12,padding:"6px 12px",borderTop:"1px solid #1a1a2a",background:"#0a0a0f"}}>
+          {[["←→","이동"],["+ -","확대/축소"],["F","전체보기"],["🖱휠","확대/축소"],["드래그","이동"]].map(([k,v]) => (
+            <span key={k} style={{fontSize:10,color:"#444"}}>
+              <kbd style={{background:"#1a1a2a",color:"#888",padding:"1px 5px",borderRadius:3,fontFamily:"monospace",fontSize:10}}>{k}</kbd>
+              {" "}{v}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
