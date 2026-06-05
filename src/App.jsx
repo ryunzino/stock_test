@@ -307,41 +307,36 @@ function SubLabel({ label, count, color }) {
 }
 
 function CompareChart({ stocks }) {
-  const apiKey = import.meta.env.VITE_ALPHA_VANTAGE_KEY || "";
   const containerRef = useRef(null);
   const chartRef = useRef(null);
-  const [status, setStatus] = useState(!apiKey ? "no-key" : "loading");
+  const [status, setStatus] = useState("loading");
 
-  const toAVSym = (ticker) => {
+  const toFMPSym = (ticker) => {
     const tv = TV_SYMBOL[ticker];
     if (!tv) return ticker;
     const [ex, sym] = tv.split(":");
     if (ex === "KRX") return sym + ".KS";
     if (ex === "TSE") return sym + ".T";
     if (ex === "HKEX") return sym + ".HK";
-    return sym.replace(".", "-");
+    return sym;
   };
 
   useEffect(() => {
-    if (!apiKey || !containerRef.current) return;
+    if (!containerRef.current) return;
     let cancelled = false;
     setStatus("loading");
     if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
 
     const fetchStock = (ticker) =>
-      fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY&symbol=${toAVSym(ticker)}&apikey=${apiKey}`)
+      fetch(`https://financialmodelingprep.com/api/v3/historical-price-full/${toFMPSym(ticker)}?timeseries=60&apikey=demo`)
         .then(r => { if (!r.ok) throw new Error(); return r.json(); })
         .then(json => {
-          const weekly = json["Weekly Time Series"];
-          if (!weekly) throw new Error("no data");
-          return Object.entries(weekly)
-            .map(([date, v]) => ({
-              time: Math.floor(new Date(date).getTime() / 1000),
-              value: parseFloat(v["4. close"])
-            }))
-            .filter(d => !isNaN(d.value))
-            .sort((a, b) => a.time - b.time)
-            .slice(-52);
+          const hist = json.historical;
+          if (!hist?.length) throw new Error("no data");
+          return hist
+            .map(d => ({ time: Math.floor(new Date(d.date).getTime() / 1000), value: d.close }))
+            .filter(d => !isNaN(d.value) && d.value > 0)
+            .sort((a, b) => a.time - b.time);
         });
 
     Promise.all(stocks.map(s => fetchStock(s.ticker)))
@@ -382,42 +377,19 @@ function CompareChart({ stocks }) {
       containerRef.current?._ro?.disconnect();
       if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
     };
-  }, [stocks.map(s => s.ticker).join(","), apiKey]);
-
-  if (status === "no-key") return (
-    <div style={{border:"1px solid #1e1e2e",borderRadius:"8px",background:"#0d0d14",padding:"40px 24px",textAlign:"center"}}>
-      <div style={{fontSize:32,marginBottom:14}}>🔑</div>
-      <div style={{fontSize:14,color:"#ffd700",fontWeight:700,marginBottom:10}}>Alpha Vantage API 키 설정 필요</div>
-      <div style={{fontSize:11,color:"#666",lineHeight:2,marginBottom:20}}>
-        오버레이 차트는 무료 주가 API 키가 필요합니다.<br/>
-        아래 순서로 1분 안에 설정할 수 있습니다.
-      </div>
-      {[
-        ["1", "alphavantage.co 에서 무료 API 키 발급", "#4a9eff"],
-        ["2", "GitHub 저장소 → Settings → Secrets → Actions", "#ffd700"],
-        ["3", "VITE_ALPHA_VANTAGE_KEY = 발급받은 키 추가", "#00ff88"],
-        ["4", "GitHub Actions 재실행 → 배포 완료", "#a855f7"],
-      ].map(([n, txt, c]) => (
-        <div key={n} style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"8px",textAlign:"left"}}>
-          <span style={{width:20,height:20,borderRadius:"50%",background:c,color:"#000",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{n}</span>
-          <span style={{fontSize:11,color:"#777"}}>{txt}</span>
-        </div>
-      ))}
-      <div style={{marginTop:16,fontSize:10,color:"#333"}}>무료 25회/일 · 5회/분 제한 · 신용카드 불필요</div>
-    </div>
-  );
+  }, [stocks.map(s => s.ticker).join(",")]);
 
   return (
     <div style={{border:"1px solid #1e1e2e",borderRadius:"8px",overflow:"hidden",background:"#0a0a0f",position:"relative",minHeight:500}}>
       {status === "loading" && (
         <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:10}}>
           <div style={{fontSize:28}} className="pulse">📊</div>
-          <div style={{fontSize:11,color:"#555"}}>Alpha Vantage에서 주가 데이터 불러오는 중...</div>
+          <div style={{fontSize:11,color:"#555"}}>주가 데이터 불러오는 중...</div>
         </div>
       )}
       {status === "error" && (
         <div style={{height:500,display:"flex",alignItems:"center",justifyContent:"center",color:"#ff6666",fontSize:11}}>
-          ⚠ 로드 실패 — API 키 확인 또는 일일 25회 한도 초과
+          ⚠ 데이터 로드 실패 — 잠시 후 다시 시도하세요
         </div>
       )}
       <div ref={containerRef} style={{height:500,visibility:status==="ready"?"visible":"hidden"}} />
