@@ -632,11 +632,11 @@ export default function InvestmentDashboard() {
         <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"26px",fontWeight:"700",color:"#fff",letterSpacing:"-0.5px"}}>AI 투자 대시보드</h1>
         <p style={{fontSize:"11px",color:"#555",marginTop:"4px"}}>종목 클릭 → 🔍 투자 분석 · 📈 차트 · 📰 뉴스 &nbsp;|&nbsp; <span style={{color:"#00ff88"}}>전체 {TOTAL_ANALYZED}종목 분석 완료</span></p>
       </div>
-      <div style={{display:"flex",borderBottom:"1px solid #1a1a1a",marginBottom:"20px",background:"#0d0d14",borderRadius:"8px 8px 0 0",padding:"0 4px",overflowX:"auto"}}>
+      <div style={{display:"flex",flexWrap:"wrap",borderBottom:"1px solid #1a1a1a",marginBottom:"20px",background:"#0d0d14",borderRadius:"8px 8px 0 0",padding:"0 4px"}}>
         {Object.values(FIELDS).map(f=>(
           <button key={f.id} className={"field-tab"+(activeField===f.id?" active":"")} onClick={()=>handleFieldChange(f.id)}>{f.emoji} {f.label}</button>
         ))}
-        <button className={"field-tab"+(activeField==="summary"?" active":"")} onClick={()=>handleFieldChange("summary")} style={{marginLeft:"auto",color:activeField==="summary"?"#fff":"#4a9eff",borderBottomColor:activeField==="summary"?"#4a9eff":"transparent"}}>📊 요약</button>
+        <button className={"field-tab"+(activeField==="summary"?" active":"")} onClick={()=>handleFieldChange("summary")} style={{color:activeField==="summary"?"#fff":"#4a9eff",borderBottomColor:activeField==="summary"?"#4a9eff":"transparent"}}>📊 요약</button>
         <button className={"field-tab"+(activeField==="compare"?" active":"")} onClick={()=>handleFieldChange("compare")} style={{color:activeField==="compare"?"#fff":"#ffd700",borderBottomColor:activeField==="compare"?"#ffd700":"transparent"}}>📈 비교</button>
       </div>
       {!isSpecialView && (
