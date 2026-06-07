@@ -320,6 +320,7 @@ function CompareChart({ stocks }) {
   const chartRef = useRef(null);
   const selectionRef = useRef(null);
   const dragRef = useRef(null);
+  const seriesListRef = useRef([]);
   const [status, setStatus] = useState("loading");
 
   useEffect(() => {
@@ -335,6 +336,7 @@ function CompareChart({ stocks }) {
         return raw.sort((a, b) => a.time - b.time);
       });
 
+    seriesListRef.current = [];
     Promise.all(stocks.map(s => fetchStock(s.ticker)))
       .then(allData => {
         if (cancelled || !containerRef.current) return;
@@ -358,6 +360,7 @@ function CompareChart({ stocks }) {
             priceFormat: { type: "custom", formatter: p => p.toFixed(1) + "%", minMove: 0.01 },
           });
           series.setData(data.map(d => ({ time: d.time, value: +((d.value / base - 1) * 100).toFixed(2) })));
+          seriesListRef.current.push(series);
         });
 
         chart.timeScale().fitContent();
@@ -367,6 +370,9 @@ function CompareChart({ stocks }) {
         ro.observe(containerRef.current);
         containerRef.current._ro = ro;
 
+        const resetYScale = () => {
+          seriesListRef.current.forEach(s => s.applyOptions({ autoscaleInfoProvider: () => null }));
+        };
         const handleKey = (e) => {
           if (!chartRef.current) return;
           const ts = chartRef.current.timeScale();
@@ -378,40 +384,59 @@ function CompareChart({ stocks }) {
           else if (e.key === "ArrowRight") ts.setVisibleLogicalRange({ from: range.from + span*0.15, to: range.to + span*0.15 });
           else if (e.key === "+" || e.key === "=") ts.setVisibleLogicalRange({ from: center - span*0.35, to: center + span*0.35 });
           else if (e.key === "-")          ts.setVisibleLogicalRange({ from: center - span*0.65, to: center + span*0.65 });
-          else if (e.key === "f" || e.key === "F") ts.fitContent();
+          else if (e.key === "f" || e.key === "F") { resetYScale(); ts.fitContent(); }
         };
         window.addEventListener("keydown", handleKey);
         containerRef.current._keyHandler = handleKey;
 
-        // 오른쪽 버튼 드래그 → 영역 줌인
+        // 오른쪽 버튼 드래그 → X+Y 동시 영역 줌인
         const wrapper = wrapperRef.current;
         const onContextMenu = (e) => e.preventDefault();
         const onMouseDown = (e) => {
           if (e.button !== 2) return;
           e.preventDefault();
           const rect = containerRef.current.getBoundingClientRect();
-          dragRef.current = { startX: e.clientX - rect.left };
-          if (selectionRef.current) Object.assign(selectionRef.current.style, { display:"block", left: dragRef.current.startX+"px", width:"0px" });
+          dragRef.current = { startX: e.clientX - rect.left, startY: e.clientY - rect.top };
+          if (selectionRef.current) Object.assign(selectionRef.current.style, {
+            display:"block", left: dragRef.current.startX+"px", top: dragRef.current.startY+"px", width:"0px", height:"0px"
+          });
         };
         const onMouseMove = (e) => {
           if (!dragRef.current || !selectionRef.current) return;
           const rect = containerRef.current.getBoundingClientRect();
-          const cur = e.clientX - rect.left;
-          const sx = dragRef.current.startX;
-          Object.assign(selectionRef.current.style, { left: Math.min(sx,cur)+"px", width: Math.abs(cur-sx)+"px" });
+          const curX = e.clientX - rect.left, curY = e.clientY - rect.top;
+          const { startX: sx, startY: sy } = dragRef.current;
+          Object.assign(selectionRef.current.style, {
+            left: Math.min(sx,curX)+"px", top: Math.min(sy,curY)+"px",
+            width: Math.abs(curX-sx)+"px", height: Math.abs(curY-sy)+"px",
+          });
         };
         const onMouseUp = (e) => {
           if (!dragRef.current) return;
           if (e.button === 2 && chartRef.current) {
             const rect = containerRef.current.getBoundingClientRect();
-            const endX = e.clientX - rect.left;
-            const minX = Math.min(dragRef.current.startX, endX);
-            const maxX = Math.max(dragRef.current.startX, endX);
-            if (maxX - minX > 10) {
+            const endX = e.clientX - rect.left, endY = e.clientY - rect.top;
+            const { startX, startY } = dragRef.current;
+            const minX = Math.min(startX, endX), maxX = Math.max(startX, endX);
+            const minY = Math.min(startY, endY), maxY = Math.max(startY, endY);
+            if (maxX - minX > 10 && maxY - minY > 10) {
+              // X축 줌
               const ts = chartRef.current.timeScale();
               const from = ts.coordinateToLogical(minX);
               const to = ts.coordinateToLogical(maxX);
               if (from !== null && to !== null) ts.setVisibleLogicalRange({ from, to });
+              // Y축 줌 — 드래그 영역의 가격 범위를 autoscaleInfoProvider로 고정
+              const ref = seriesListRef.current[0];
+              if (ref) {
+                const pTop = ref.coordinateToPrice(minY);
+                const pBot = ref.coordinateToPrice(maxY);
+                if (pTop !== null && pBot !== null) {
+                  const minP = Math.min(pTop, pBot), maxP = Math.max(pTop, pBot);
+                  seriesListRef.current.forEach(s => s.applyOptions({
+                    autoscaleInfoProvider: () => ({ priceRange: { minValue: minP, maxValue: maxP }, margins: { above: 0, below: 0 } }),
+                  }));
+                }
+              }
             }
           }
           dragRef.current = null;
@@ -454,7 +479,7 @@ function CompareChart({ stocks }) {
         </div>
       )}
       <div ref={containerRef} style={{height:500,visibility:status==="ready"?"visible":"hidden"}} />
-      <div ref={selectionRef} style={{display:"none",position:"absolute",top:0,height:500,background:"rgba(74,158,255,0.12)",borderLeft:"1px solid rgba(74,158,255,0.5)",borderRight:"1px solid rgba(74,158,255,0.5)",pointerEvents:"none",zIndex:5}} />
+      <div ref={selectionRef} style={{display:"none",position:"absolute",top:0,left:0,width:0,height:0,background:"rgba(74,158,255,0.12)",border:"1px solid rgba(74,158,255,0.5)",pointerEvents:"none",zIndex:5}} />
       {status === "ready" && (
         <div style={{display:"flex",gap:12,padding:"6px 12px",borderTop:"1px solid #1a1a2a",background:"#0a0a0f"}}>
           {[["←→","이동"],["+ -","확대/축소"],["F","전체보기"],["🖱휠","확대/축소"],["우클릭드래그","영역줌인"]].map(([k,v]) => (
