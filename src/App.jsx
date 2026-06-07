@@ -348,8 +348,8 @@ function CompareChart({ stocks }) {
           grid: { vertLines: { color: "#151520" }, horzLines: { color: "#151520" } },
           rightPriceScale: { borderColor: "#1a1a2a" },
           timeScale: { borderColor: "#1a1a2a", timeVisible: true, fixLeftEdge: false, fixRightEdge: false },
-          handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true },
-          handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
+          handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true },
+          handleScale: { mouseWheel: false, pinch: true, axisPressedMouseMove: true },
         });
         chartRef.current = chart;
 
@@ -369,6 +369,28 @@ function CompareChart({ stocks }) {
         });
         ro.observe(containerRef.current);
         containerRef.current._ro = ro;
+
+        // 커서 위치 기준 휠 줌
+        const onWheel = (e) => {
+          if (!chartRef.current) return;
+          e.preventDefault();
+          const ts = chartRef.current.timeScale();
+          const range = ts.getVisibleLogicalRange();
+          if (!range) return;
+          const rect = containerRef.current.getBoundingClientRect();
+          const cursorLogical = ts.coordinateToLogical(e.clientX - rect.left);
+          if (cursorLogical === null) return;
+          const span = range.to - range.from;
+          const ratio = Math.min(1, Math.max(0, (cursorLogical - range.from) / span));
+          const factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
+          const newSpan = span * factor;
+          ts.setVisibleLogicalRange({
+            from: cursorLogical - ratio * newSpan,
+            to: cursorLogical + (1 - ratio) * newSpan,
+          });
+        };
+        containerRef.current.addEventListener("wheel", onWheel, { passive: false });
+        containerRef.current._wheelHandler = onWheel;
 
         const resetYScale = () => {
           seriesListRef.current.forEach(s => s.applyOptions({ autoscaleInfoProvider: (original) => original() }));
@@ -462,6 +484,7 @@ function CompareChart({ stocks }) {
       containerRef.current?._ro?.disconnect();
       if (containerRef.current?._keyHandler) window.removeEventListener("keydown", containerRef.current._keyHandler);
       containerRef.current?._dragCleanup?.();
+      if (containerRef.current?._wheelHandler) containerRef.current.removeEventListener("wheel", containerRef.current._wheelHandler);
       if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
     };
   }, [stocks.map(s => s.ticker).join(",")]);
