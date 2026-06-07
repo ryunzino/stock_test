@@ -2266,7 +2266,7 @@ export const ANALYSIS = {
     catalysts: ["Tembo e-LV SPAC 상장(TEMB) 완료","2번째 AI 데이터센터 인수 발표","소버린 AI 대형 정부 계약 수주","EBITDA 흑자 분기 2회 연속 달성"],
     entryStrategy: "포트폴리오 1~2% 이하 투기성 소액만 권장. Tembo 상장 완료 + 2번째 DC 계약 확인 후 진입이 안전. 손절 라인 -30% 이하 명확히 설정 필수. 텐배거 잠재력과 전액 손실 리스크가 공존하는 고위험 종목.",
   },
-  IONQ:{
+  "IONQ":{
     verdict:"고위험 · 선도 베팅",verdictColor:"#a855f7",horizon:"5~10년",
     moat:"이온 트랩 방식 특허 + AQ(알고리즘 큐비트) 기술 우위 + 정부 계약 기반",
     thesis:"이온 트랩 방식은 오류율이 낮고 큐비트 품질이 높아 장기 유망. 미군·아마존·현대 등 계약 확장 중이며 양자 우위 달성 시 폭발적 성장 예상.",
@@ -2280,7 +2280,7 @@ export const ANALYSIS = {
     catalysts:["64 AQ 시스템 상용화 (2025)","양자 오류 수정(QEC) 실증","대형 기업·정부 장기 계약 수주"],
     entryStrategy:"고위험 소형주. 포트폴리오 2~3% 이내 분할 매수. 손절선 -40% 설정 권장.",
   },
-  RGTI:{
+  "RGTI":{
     verdict:"고위험 · 투기적 베팅",verdictColor:"#a855f7",horizon:"5~10년",
     moat:"초전도 방식 + AWS·Azure 클라우드 파트너십",
     thesis:"초전도 방식 양자컴퓨팅 퓨어플레이. IONQ 대비 큐비트 수 많지만 오류율 높음. 클라우드 서비스 제공으로 수익화 진행 중.",
@@ -2294,7 +2294,7 @@ export const ANALYSIS = {
     catalysts:["100+ 큐비트 시스템 출시","오류 수정 기술 개선","클라우드 파트너십 확대"],
     entryStrategy:"극고위험 소형주. 포트폴리오 1~2% 이내. 장기 보유 or 손절 원칙 필수.",
   },
-  QBTS:{
+  "QBTS":{
     verdict:"고위험 · 틈새 베팅",verdictColor:"#a855f7",horizon:"3~7년",
     moat:"양자 어닐링 특허 + 최적화 문제 상업화 선두 + Leap 클라우드 구독 매출",
     thesis:"양자 어닐링으로 물류·금융·제약 최적화에 특화. 범용 양자컴퓨터는 아니지만 이미 VW·NTT 등 상업 고객 보유로 퓨어플레이 중 수익화에 가장 가까움.",
@@ -2308,7 +2308,7 @@ export const ANALYSIS = {
     catalysts:["Advantage2 시스템 확장","대형 제약·물류 계약","범용 양자와의 하이브리드 솔루션"],
     entryStrategy:"고위험이나 퓨어플레이 중 수익화 가장 가까움. 1~2% 비중 분할 매수.",
   },
-  QUBT:{
+  "QUBT":{
     verdict:"극고위험 · 투기적 베팅",verdictColor:"#a855f7",horizon:"5~10년",
     moat:"포토닉스 기반 양자 — 상온 동작 가능성",
     thesis:"포토닉스(빛 기반) 양자컴퓨팅으로 차별화 시도. 상온 동작 가능성이 장기 차별점. 소규모 기업으로 가장 고위험이지만 기술 도약 시 수익률 극대화 가능.",
@@ -2322,7 +2322,7 @@ export const ANALYSIS = {
     catalysts:["포토닉 양자 칩 시연","정부 대형 계약 수주","전략적 파트너십 발표"],
     entryStrategy:"포트폴리오 0.5~1% 이내 소액 베팅만. 전액 손실 가능성 인지 필수.",
   },
-  IBM:{
+  "IBM":{
     verdict:"장기매수",verdictColor:"#00cc66",horizon:"3~7년",
     moat:"양자 에코시스템 선도(Qiskit) + 기업 IT 락인 + 양자·AI·클라우드 통합 플랫폼",
     thesis:"가장 성숙한 양자 에코시스템(IBM Quantum Network, 200+ 파트너). 기존 기업 고객에서 양자로의 자연스러운 업셀링 가능. 단기는 AI 가속기+하이브리드 클라우드 성장.",
@@ -2338,7 +2338,7 @@ export const ANALYSIS = {
   },
 
   // 핵에너지 & AI 전력
-  GEV:{
+  "GEV":{
     verdict:"매수",verdictColor:"#4a9eff",horizon:"3~5년",
     moat:"가스터빈 글로벌 과점(GE·지멘스·미쓰비시 3사 독점) + 전력망 장비",
     thesis:"GE에서 에너지 사업 분사(2024). 가스터빈은 GE·지멘스에너지·미쓰비시파워 3사 과점. AI 데이터센터의 천연가스 발전 수요 급증 수혜. 풍력·그리드 솔루션으로 에너지 전환도 병행.",
@@ -2352,7 +2352,7 @@ export const ANALYSIS = {
     catalysts:["가스터빈 신규 수주 급증","그리드 솔루션 대형 계약 발표","풍력 부문 마진 개선 발표"],
     entryStrategy:"에너지 인프라 핵심 포지션. 3~4% 비중. 분사 후 저평가 구간에서 분할 매수.",
   },
-  LEU:{
+  "LEU":{
     verdict:"매수",verdictColor:"#4a9eff",horizon:"3~7년",
     moat:"미국 유일 우라늄 농축업체 — HALEU 생산권 정부 독점 계약",
     thesis:"미국 내 유일한 상업 우라늄 농축 업체. 소형 모듈 원자로(SMR)에 필요한 고농축 저농축 우라늄(HALEU) 생산 독점. 미 에너지부로부터 수억 달러 계약 수주. 러시아산 농축 우라늄 의존도 탈피 국가 전략 수혜.",
@@ -2366,7 +2366,7 @@ export const ANALYSIS = {
     catalysts:["HALEU 상업 생산 개시","미 에너지부 추가 계약","SMR 프로젝트 첫 허가"],
     entryStrategy:"고위험·고보상. 포트폴리오 1~2% 이내. SMR 에코시스템 성장 레버리지.",
   },
-  UEC:{
+  "UEC":{
     verdict:"투기적 베팅",verdictColor:"#a855f7",horizon:"2~5년",
     moat:"저비용 ISR(지하용액) 방식 우라늄 채굴 — 미국·캐나다 광산 포트폴리오",
     thesis:"미국·캐나다·파라과이에 우라늄 광산 포트폴리오 보유. ISR 방식으로 전통 채굴 대비 비용 60% 절감. 우라늄 현물 가격 상승 시 레버리지 효과 극대화.",
@@ -2382,7 +2382,7 @@ export const ANALYSIS = {
   },
 
   // 사이버보안
-  CRWD:{
+  "CRWD":{
     verdict:"강력매수",verdictColor:"#00ff88",horizon:"3~5년",
     moat:"AI 기반 엔드포인트 보안 1위 — Falcon 플랫폼 모듈 확장으로 락인",
     thesis:"Falcon 플랫폼에 엔드포인트·ID·클라우드·SIEM 모듈 통합. 수억 개 엔드포인트 데이터로 AI 훈련 → 경쟁사 따라잡기 불가능한 탐지 정확도. ARR $4B+, NRR 120%+로 고성장 유지. 2024년 대규모 장애(Blue Screen) 후 회복력 입증.",
@@ -2396,7 +2396,7 @@ export const ANALYSIS = {
     catalysts:["Charlotte AI 에이전트 고객 확대","SIEM·SOAR 모듈 채택 증가","대형 기업 플랫폼 전환 계약"],
     entryStrategy:"사이버보안 핵심 포지션. 4~5% 비중. 분할 매수 권장.",
   },
-  PANW:{
+  "PANW":{
     verdict:"강력매수",verdictColor:"#00ff88",horizon:"3~5년",
     moat:"통합 사이버보안 플랫폼 1위 — 네트워크·클라우드·SOC 단일 콘솔 통합",
     thesis:"Prisma Cloud·Cortex XDR·SASE(Prisma Access)를 단일 플랫폼으로 통합하는 '플랫폼화' 전략. 복수 보안 벤더를 PANW 단일로 대체 → 고객 비용 절감 + 벤더 수 감소. ARR $4.2B, NRR 115%+.",
@@ -2410,7 +2410,7 @@ export const ANALYSIS = {
     catalysts:["플랫폼 채택 ARR 가속","AI SOC 자동화 계약 증가","클라우드 보안 대형 계약 수주"],
     entryStrategy:"CRWD와 함께 사이버보안 양대 핵심주. 3~5% 비중. 분할 매수.",
   },
-  ZS:{
+  "ZS":{
     verdict:"매수",verdictColor:"#4a9eff",horizon:"3~5년",
     moat:"클라우드 보안 게이트웨이(SSE) 1위 — SASE 전환의 핵심 플랫폼",
     thesis:"재택근무·클라우드 전환으로 전통 방화벽 무력화. Zscaler Internet Access(ZIA)·ZPA가 기업 트래픽 전체를 클라우드에서 인라인 검사. SASE 시장에서 Cisco·Palo Alto와 경쟁 중이나 클라우드 네이티브에서 압도적 우위.",
@@ -2424,7 +2424,7 @@ export const ANALYSIS = {
     catalysts:["ZIA+ZPA 번들 대형 계약","AI 트래픽 보안 수요 급증","Federal(정부) 계약 확대"],
     entryStrategy:"클라우드 보안 핵심 포지션. 2~3% 비중. CRWD·PANW 보조 포지션으로 운용.",
   },
-  OKTA:{
+  "OKTA":{
     verdict:"매수",verdictColor:"#4a9eff",horizon:"2~4년",
     moat:"아이덴티티 & 접근 관리(IAM) 1위 — 기업 ID 인프라 락인",
     thesis:"기업 직원·고객 ID 관리(SSO·MFA) 클라우드 플랫폼. AI 에이전트 급증으로 '머신 아이덴티티' 관리 수요 폭증 직접 수혜. 2022~2023년 침해 사고 후 보안 강화 및 신뢰 회복 중.",
@@ -2452,7 +2452,7 @@ export const ANALYSIS = {
     catalysts:["Purple AI 에이전트 대형 계약","흑자 전환 가시화","SIEM 대형 기업 교체 계약"],
     entryStrategy:"고성장 소형주. 2~3% 비중. CRWD·PANW 포지션 보완으로 운용.",
   },
-  FTNT:{
+  "FTNT":{
     verdict:"매수",verdictColor:"#4a9eff",horizon:"2~4년",
     moat:"ASIC 자체 칩(FortiASIC) 기반 최고 성능 방화벽 — 중소기업~대기업 풀커버",
     thesis:"FortiASIC 자체 설계 칩으로 경쟁사 대비 처리 성능 3배, 비용 50% 절감. 방화벽·SD-WAN·SASE 통합 Fortinet Security Fabric. 중소기업부터 대기업까지 전 영역 커버로 고객 이탈 낮음.",
@@ -2466,7 +2466,7 @@ export const ANALYSIS = {
     catalysts:["OT/IoT 보안 대형 산업 계약","FortiGate 차세대 ASIC 출시","SASE 통합 플랫폼 채택 증가"],
     entryStrategy:"안정적 성장+고마진. 2~3% 비중. 방어적 사이버보안 포지션.",
   },
-  CYBR:{
+  "CYBR":{
     verdict:"매수",verdictColor:"#4a9eff",horizon:"3~5년",
     moat:"특권 계정 관리(PAM) 글로벌 1위 — AI 에이전트 머신 아이덴티티 수요 급증",
     thesis:"특권 계정(관리자·서버 접근권) 관리 글로벌 1위. AI 에이전트가 폭증하며 머신 아이덴티티 보안 수요가 폭발적으로 증가 중. 사람보다 AI 에이전트가 많아지는 시대에 PAM이 새로운 핵심 보안 레이어로 부상.",
