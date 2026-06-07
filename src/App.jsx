@@ -366,9 +366,8 @@ function CompareChart({ stocks }) {
         chart.timeScale().fitContent();
 
         // 차트가 인식하는 커서 x좌표 추적 (crosshair와 동일한 좌표계 사용)
-        let chartCursorX = null;
         chart.subscribeCrosshairMove((param) => {
-          chartCursorX = param.point?.x ?? chartCursorX;
+          if (param.point?.x !== undefined) containerRef.current._crosshairX = param.point.x;
         });
         const ro = new ResizeObserver(() => {
           chartRef.current?.applyOptions({ width: containerRef.current?.clientWidth || 600 });
@@ -376,14 +375,15 @@ function CompareChart({ stocks }) {
         ro.observe(containerRef.current);
         containerRef.current._ro = ro;
 
-        // 커서 위치 기준 휠 줌 (crosshair와 동일한 좌표계 사용)
+        // 커서 위치 기준 휠 줌 — offsetX는 실제 캔버스 기준 좌표로 chart 내부와 동일한 좌표계
         const onWheel = (e) => {
           if (!chartRef.current) return;
           e.preventDefault();
           const ts = chartRef.current.timeScale();
           const range = ts.getVisibleLogicalRange();
           if (!range) return;
-          const x = chartCursorX ?? (e.clientX - containerRef.current.getBoundingClientRect().left);
+          const x = e.offsetX ?? containerRef.current._crosshairX;
+          if (x == null) return;
           const cursorLogical = ts.coordinateToLogical(x);
           if (cursorLogical === null) return;
           const span = range.to - range.from;
