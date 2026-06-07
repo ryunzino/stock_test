@@ -347,7 +347,7 @@ function CompareChart({ stocks }) {
           layout: { background: { type: ColorType.Solid, color: "#0a0a0f" }, textColor: "#888" },
           grid: { vertLines: { color: "#151520" }, horzLines: { color: "#151520" } },
           rightPriceScale: { borderColor: "#1a1a2a" },
-          timeScale: { borderColor: "#1a1a2a", timeVisible: true, fixLeftEdge: false, fixRightEdge: false },
+          timeScale: { borderColor: "#1a1a2a", timeVisible: true, fixLeftEdge: true, fixRightEdge: true },
           handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true },
           handleScale: { mouseWheel: false, pinch: true, axisPressedMouseMove: true },
         });
@@ -364,6 +364,20 @@ function CompareChart({ stocks }) {
         });
 
         chart.timeScale().fitContent();
+        // 전체 데이터 범위 저장 (fitContent 직후 = 최대 가시 범위)
+        const fullRange = chart.timeScale().getVisibleLogicalRange();
+        if (fullRange) containerRef.current._dataRange = fullRange;
+
+        // 범위를 데이터 경계 안으로 제한하는 헬퍼
+        const clampToData = (from, to) => {
+          const dr = containerRef.current._dataRange;
+          if (!dr) return { from, to };
+          const span = to - from;
+          if (span >= dr.to - dr.from) return { from: dr.from, to: dr.to };
+          if (from < dr.from) return { from: dr.from, to: dr.from + span };
+          if (to > dr.to)     return { from: dr.to - span, to: dr.to };
+          return { from, to };
+        };
 
         // 크로스헤어의 논리 인덱스를 추적 (좌표 변환 없이 차트 내부 기준)
         chart.subscribeCrosshairMove((param) => {
@@ -375,7 +389,7 @@ function CompareChart({ stocks }) {
         ro.observe(containerRef.current);
         containerRef.current._ro = ro;
 
-        // 커서 위치 기준 휠 줌 — 크로스헤어 논리 인덱스를 앵커로 사용 (좌표 변환 오차 제거)
+        // 커서 위치 기준 휠 줌 (데이터 범위 초과 방지)
         const onWheel = (e) => {
           if (!chartRef.current) return;
           e.preventDefault();
@@ -388,10 +402,8 @@ function CompareChart({ stocks }) {
           const ratio = Math.min(1, Math.max(0, (anchor - range.from) / span));
           const factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
           const newSpan = span * factor;
-          ts.setVisibleLogicalRange({
-            from: anchor - ratio * newSpan,
-            to: anchor + (1 - ratio) * newSpan,
-          });
+          const clamped = clampToData(anchor - ratio * newSpan, anchor + (1 - ratio) * newSpan);
+          ts.setVisibleLogicalRange(clamped);
         };
         containerRef.current.addEventListener("wheel", onWheel, { passive: false });
         containerRef.current._wheelHandler = onWheel;
@@ -407,10 +419,10 @@ function CompareChart({ stocks }) {
           if (!range) return;
           const span = range.to - range.from;
           const center = (range.from + range.to) / 2;
-          if (e.key === "ArrowLeft")      ts.setVisibleLogicalRange({ from: range.from - span*0.15, to: range.to - span*0.15 });
-          else if (e.key === "ArrowRight") ts.setVisibleLogicalRange({ from: range.from + span*0.15, to: range.to + span*0.15 });
-          else if (e.key === "+" || e.key === "=") ts.setVisibleLogicalRange({ from: center - span*0.35, to: center + span*0.35 });
-          else if (e.key === "-")          ts.setVisibleLogicalRange({ from: center - span*0.65, to: center + span*0.65 });
+          if (e.key === "ArrowLeft")           ts.setVisibleLogicalRange(clampToData(range.from - span*0.15, range.to - span*0.15));
+          else if (e.key === "ArrowRight")     ts.setVisibleLogicalRange(clampToData(range.from + span*0.15, range.to + span*0.15));
+          else if (e.key === "+" || e.key === "=") ts.setVisibleLogicalRange(clampToData(center - span*0.35, center + span*0.35));
+          else if (e.key === "-")              ts.setVisibleLogicalRange(clampToData(center - span*0.65, center + span*0.65));
           else if (e.key === "f" || e.key === "F") { resetYScale(); ts.fitContent(); }
         };
         window.addEventListener("keydown", handleKey);
