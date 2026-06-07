@@ -35,6 +35,13 @@ const VERDICT_GROUPS = (() => {
 
 const COMPARE_COLORS = ["#4a9eff","#ff6b6b","#ffd700","#a855f7","#00ff88"];
 const RANGE_PRESETS = [["1M",1],["3M",3],["6M",6],["1Y",12],["3Y",36],["5Y",60],["전체",null]];
+const parseDate = (str) => {
+  if (!str) return null;
+  const s = str.replace(/[.\-\/\s]/g, "");
+  if (!/^\d{8}$/.test(s)) return null;
+  const d = new Date(`${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}T00:00:00`);
+  return isNaN(d.getTime()) ? null : Math.floor(d.getTime() / 1000);
+};
 
 function MetricGrid({ items, color }) {
   return (
@@ -624,25 +631,35 @@ function CompareChart({ stocks }) {
               }}>{label}</button>
             ))}
             <span style={{color:"#333",fontSize:11,margin:"0 4px"}}>|</span>
-            <input type="date" value={customFrom} onChange={e => {
-              const v = e.target.value;
-              setCustomFrom(v);
-              if (v && customTo) {
-                const fromTs = Math.floor(new Date(v).getTime() / 1000);
-                const toTs = Math.floor(new Date(customTo + "T23:59:59").getTime() / 1000);
-                applyRangeRef.current?.(null, fromTs, toTs);
-              }
-            }} style={{background:"#0d0d1a",color:"#888",border:"1px solid #1e1e2e",borderRadius:4,padding:"2px 6px",fontSize:11,colorScheme:"dark"}} />
+            <input type="text" value={customFrom} placeholder="YYYY-MM-DD"
+              onChange={e => setCustomFrom(e.target.value)}
+              onKeyDown={e => {
+                if (e.key !== "Enter") return;
+                const fromTs = parseDate(customFrom);
+                const toTs = parseDate(customTo);
+                if (fromTs && toTs) applyRangeRef.current?.(null, fromTs, toTs);
+              }}
+              onBlur={() => {
+                const fromTs = parseDate(customFrom);
+                const toTs = parseDate(customTo);
+                if (fromTs && toTs) applyRangeRef.current?.(null, fromTs, toTs);
+              }}
+              style={{background:"#0d0d1a",color:"#aaa",border:`1px solid ${rangeLabel==="custom"?"#4a9eff55":"#1e1e2e"}`,borderRadius:4,padding:"2px 8px",fontSize:11,width:90,outline:"none"}} />
             <span style={{color:"#444",fontSize:11}}>~</span>
-            <input type="date" value={customTo} onChange={e => {
-              const v = e.target.value;
-              setCustomTo(v);
-              if (customFrom && v) {
-                const fromTs = Math.floor(new Date(customFrom).getTime() / 1000);
-                const toTs = Math.floor(new Date(v + "T23:59:59").getTime() / 1000);
-                applyRangeRef.current?.(null, fromTs, toTs);
-              }
-            }} style={{background:"#0d0d1a",color:"#888",border:"1px solid #1e1e2e",borderRadius:4,padding:"2px 6px",fontSize:11,colorScheme:"dark"}} />
+            <input type="text" value={customTo} placeholder="YYYY-MM-DD"
+              onChange={e => setCustomTo(e.target.value)}
+              onKeyDown={e => {
+                if (e.key !== "Enter") return;
+                const fromTs = parseDate(customFrom);
+                const toTs = parseDate(customTo);
+                if (fromTs && toTs) applyRangeRef.current?.(null, fromTs, toTs);
+              }}
+              onBlur={() => {
+                const fromTs = parseDate(customFrom);
+                const toTs = parseDate(customTo);
+                if (fromTs && toTs) applyRangeRef.current?.(null, fromTs, toTs);
+              }}
+              style={{background:"#0d0d1a",color:"#aaa",border:`1px solid ${rangeLabel==="custom"?"#4a9eff55":"#1e1e2e"}`,borderRadius:4,padding:"2px 8px",fontSize:11,width:90,outline:"none"}} />
           </div>
           <div style={{display:"flex",gap:14,marginLeft:"auto",flexWrap:"wrap"}}>
             {stocks.map((s, i) => {
