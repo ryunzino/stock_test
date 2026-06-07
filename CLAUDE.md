@@ -15,7 +15,7 @@
 
 ## 저장소 구조
 ```
-stock_test/
+stock_guide/
 ├── src/
 │   ├── App.jsx           # UI 컴포넌트 (TradingViewChart, NewsPanel, AnalysisPanel 등)
 │   ├── main.jsx          # React 진입점
@@ -24,7 +24,7 @@ stock_test/
 │       ├── fields.js     # 탭/섹터/종목 구성 + TYPE 정의
 │       └── analysis.js   # 종목별 투자 분석 데이터
 ├── index.html            # Vite HTML 템플릿
-├── vite.config.js        # base: '/stock_test/' 설정 필수
+├── vite.config.js        # base: '/stock_guide/' 설정 필수
 ├── package.json
 ├── package-lock.json
 ├── CLAUDE.md             # 프로젝트지침 (이 파일)
@@ -37,9 +37,9 @@ stock_test/
 1. `main` 브랜치에 push
 2. GitHub Actions가 자동으로 `npm install && npm run build` 실행
 3. `dist/` 폴더를 GitHub Pages에 배포
-4. 배포 URL: https://ryunzino.github.io/stock_test/
+4. 배포 URL: https://ryunzino.github.io/stock_guide/
 
-> **주의:** `vite.config.js`의 `base: '/stock_test/'` 는 절대 제거하지 말 것.
+> **주의:** `vite.config.js`의 `base: '/stock_guide/'` 는 절대 제거하지 말 것.
 > 제거하면 GitHub Pages에서 assets 경로가 깨짐.
 
 ## 소스 구조
