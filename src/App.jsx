@@ -364,22 +364,38 @@ function CompareChart({ stocks }) {
         });
 
         chart.timeScale().fitContent();
-        // 전체 데이터 범위: requestAnimationFrame으로 fitContent 완전 반영 후 캡처
+        // 상장일이 다른 종목 비교 시, 가장 늦게 상장한 종목의 첫 데이터 이전은 표시 안 함
         requestAnimationFrame(() => {
           if (!chartRef.current || !containerRef.current) return;
-          const r = chartRef.current.timeScale().getVisibleLogicalRange();
-          if (r) containerRef.current._dataRange = r;
+          const ts = chartRef.current.timeScale();
+          const fullRange = ts.getVisibleLogicalRange();
+          if (!fullRange) return;
+
+          // 가장 늦은 첫 데이터 시점 (모든 종목이 데이터를 가지는 시작점)
+          const maxStartTime = Math.max(...allData.map(d => d[0].time));
+          const startCoord = ts.timeToCoordinate(maxStartTime);
+          const fromLogical = startCoord != null ? ts.coordinateToLogical(startCoord) : null;
+
+          const dataFrom = (fromLogical != null && fromLogical > fullRange.from)
+            ? fromLogical
+            : fullRange.from;
+
+          containerRef.current._dataRange = { from: dataFrom, to: fullRange.to };
+
+          // 초기 뷰도 상장 이전 구간 숨김
+          if (dataFrom > fullRange.from) {
+            ts.setVisibleLogicalRange({ from: dataFrom, to: fullRange.to });
+          }
         });
 
         // 범위를 데이터 경계 안으로 제한하는 헬퍼
-        // 최대 줌아웃 시에는 fitContent()로 직접 처리 (정확도 보장)
         const clampToData = (ts, from, to) => {
           const dr = containerRef.current._dataRange;
           if (!dr) { ts.setVisibleLogicalRange({ from, to }); return; }
           const span = to - from;
           const dataSpan = dr.to - dr.from;
-          // 전체 데이터보다 넓으면 fitContent로 정확하게 복원
-          if (span >= dataSpan) { ts.fitContent(); return; }
+          // 전체 데이터 범위로 복원 (fitContent 대신 dr 기준 — 상장 이전 구간 노출 방지)
+          if (span >= dataSpan) { ts.setVisibleLogicalRange({ from: dr.from, to: dr.to }); return; }
           // 왼쪽 경계 초과
           if (from < dr.from) { ts.setVisibleLogicalRange({ from: dr.from, to: dr.from + span }); return; }
           // 오른쪽 경계 초과
