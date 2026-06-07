@@ -327,6 +327,8 @@ function CompareChart({ stocks }) {
   const [status, setStatus] = useState("loading");
   const [rangeLabel, setRangeLabel] = useState("전체");
   const [rangePct, setRangePct] = useState([]);
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -378,28 +380,45 @@ function CompareChart({ stocks }) {
         });
 
         // 기간 선택 후 데이터 재정규화 & 차트 범위 업데이트
-        const applyRange = (months) => {
+        // months: 프리셋 개월 수 (null=전체), fromTs/toTs: 커스텀 범위 (unix sec)
+        const applyRange = (months, fromTs = null, toTs = null) => {
           if (!chartRef.current) return;
           const ts = chartRef.current.timeScale();
           const latestTime = Math.max(...rawDataRef.current.map(d => d[d.length - 1]?.time ?? 0));
-          const fromTime = months ? (() => {
+
+          let fromTime, toTime;
+          if (fromTs !== null) {
+            fromTime = fromTs;
+            toTime = toTs ?? latestTime;
+          } else if (months) {
             const d = new Date(latestTime * 1000);
             d.setMonth(d.getMonth() - months);
-            return Math.floor(d.getTime() / 1000);
-          })() : null;
+            fromTime = Math.floor(d.getTime() / 1000);
+            toTime = null;
+          } else {
+            fromTime = null;
+            toTime = null;
+          }
 
           const newPct = [];
           rawDataRef.current.forEach((rawData, i) => {
             const series = seriesListRef.current[i];
             if (!series) { newPct.push(null); return; }
-            const filtered = fromTime ? rawData.filter(d => d.time >= fromTime) : rawData;
+            const filtered = rawData.filter(d =>
+              (fromTime === null || d.time >= fromTime) &&
+              (toTime === null || d.time <= toTime)
+            );
             if (!filtered.length) { newPct.push(null); return; }
             const base = filtered[0].value || 1;
             series.setData(filtered.map(d => ({ time: d.time, value: +((d.value / base - 1) * 100).toFixed(2) })));
             newPct.push(+((filtered[filtered.length - 1].value / base - 1) * 100).toFixed(1));
           });
           setRangePct(newPct);
-          setRangeLabel(RANGE_PRESETS.find(([, m]) => m === months)?.[0] ?? "전체");
+          if (fromTs !== null) {
+            setRangeLabel("custom");
+          } else {
+            setRangeLabel(RANGE_PRESETS.find(([, m]) => m === months)?.[0] ?? "전체");
+          }
           ts.fitContent();
           requestAnimationFrame(() => {
             if (!chartRef.current || !containerRef.current) return;
@@ -595,15 +614,35 @@ function CompareChart({ stocks }) {
       )}
       {status === "ready" && (
         <div style={{display:"flex",alignItems:"center",gap:6,padding:"7px 12px",borderBottom:"1px solid #1a1a2a",flexWrap:"wrap"}}>
-          <div style={{display:"flex",gap:4}}>
+          <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
             {RANGE_PRESETS.map(([label, months]) => (
-              <button key={label} onClick={() => applyRangeRef.current?.(months)} style={{
+              <button key={label} onClick={() => { setCustomFrom(""); setCustomTo(""); applyRangeRef.current?.(months); }} style={{
                 background: rangeLabel === label ? "#1e2a4a" : "transparent",
                 color: rangeLabel === label ? "#4a9eff" : "#555",
                 border: `1px solid ${rangeLabel === label ? "#4a9eff55" : "#1e1e2e"}`,
                 borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer",
               }}>{label}</button>
             ))}
+            <span style={{color:"#333",fontSize:11,margin:"0 4px"}}>|</span>
+            <input type="date" value={customFrom} onChange={e => {
+              const v = e.target.value;
+              setCustomFrom(v);
+              if (v && customTo) {
+                const fromTs = Math.floor(new Date(v).getTime() / 1000);
+                const toTs = Math.floor(new Date(customTo + "T23:59:59").getTime() / 1000);
+                applyRangeRef.current?.(null, fromTs, toTs);
+              }
+            }} style={{background:"#0d0d1a",color:"#888",border:"1px solid #1e1e2e",borderRadius:4,padding:"2px 6px",fontSize:11,colorScheme:"dark"}} />
+            <span style={{color:"#444",fontSize:11}}>~</span>
+            <input type="date" value={customTo} onChange={e => {
+              const v = e.target.value;
+              setCustomTo(v);
+              if (customFrom && v) {
+                const fromTs = Math.floor(new Date(customFrom).getTime() / 1000);
+                const toTs = Math.floor(new Date(v + "T23:59:59").getTime() / 1000);
+                applyRangeRef.current?.(null, fromTs, toTs);
+              }
+            }} style={{background:"#0d0d1a",color:"#888",border:"1px solid #1e1e2e",borderRadius:4,padding:"2px 6px",fontSize:11,colorScheme:"dark"}} />
           </div>
           <div style={{display:"flex",gap:14,marginLeft:"auto",flexWrap:"wrap"}}>
             {stocks.map((s, i) => {
