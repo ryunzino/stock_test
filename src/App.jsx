@@ -365,9 +365,9 @@ function CompareChart({ stocks }) {
 
         chart.timeScale().fitContent();
 
-        // 차트가 인식하는 커서 x좌표 추적 (crosshair와 동일한 좌표계 사용)
+        // 크로스헤어의 논리 인덱스를 추적 (좌표 변환 없이 차트 내부 기준)
         chart.subscribeCrosshairMove((param) => {
-          if (param.point?.x !== undefined) containerRef.current._crosshairX = param.point.x;
+          if (param.logical != null) containerRef.current._anchorLogical = param.logical;
         });
         const ro = new ResizeObserver(() => {
           chartRef.current?.applyOptions({ width: containerRef.current?.clientWidth || 600 });
@@ -375,24 +375,22 @@ function CompareChart({ stocks }) {
         ro.observe(containerRef.current);
         containerRef.current._ro = ro;
 
-        // 커서 위치 기준 휠 줌 — offsetX는 실제 캔버스 기준 좌표로 chart 내부와 동일한 좌표계
+        // 커서 위치 기준 휠 줌 — 크로스헤어 논리 인덱스를 앵커로 사용 (좌표 변환 오차 제거)
         const onWheel = (e) => {
           if (!chartRef.current) return;
           e.preventDefault();
           const ts = chartRef.current.timeScale();
           const range = ts.getVisibleLogicalRange();
           if (!range) return;
-          const x = e.offsetX ?? containerRef.current._crosshairX;
-          if (x == null) return;
-          const cursorLogical = ts.coordinateToLogical(x);
-          if (cursorLogical === null) return;
+          const anchor = containerRef.current._anchorLogical;
+          if (anchor == null) return;
           const span = range.to - range.from;
-          const ratio = Math.min(1, Math.max(0, (cursorLogical - range.from) / span));
+          const ratio = Math.min(1, Math.max(0, (anchor - range.from) / span));
           const factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
           const newSpan = span * factor;
           ts.setVisibleLogicalRange({
-            from: cursorLogical - ratio * newSpan,
-            to: cursorLogical + (1 - ratio) * newSpan,
+            from: anchor - ratio * newSpan,
+            to: anchor + (1 - ratio) * newSpan,
           });
         };
         containerRef.current.addEventListener("wheel", onWheel, { passive: false });
