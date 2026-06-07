@@ -484,6 +484,7 @@ function CompareChart({ stocks }) {
           chartRef.current?.priceScale("right").applyOptions({ autoScale: true });
         };
         const handleKey = (e) => {
+          if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
           if (!chartRef.current) return;
           const ts = chartRef.current.timeScale();
           const range = ts.getVisibleLogicalRange();
