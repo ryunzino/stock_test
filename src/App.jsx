@@ -364,21 +364,27 @@ function CompareChart({ stocks }) {
         });
 
         chart.timeScale().fitContent();
+
+        // 차트가 인식하는 커서 x좌표 추적 (crosshair와 동일한 좌표계 사용)
+        let chartCursorX = null;
+        chart.subscribeCrosshairMove((param) => {
+          chartCursorX = param.point?.x ?? chartCursorX;
+        });
         const ro = new ResizeObserver(() => {
           chartRef.current?.applyOptions({ width: containerRef.current?.clientWidth || 600 });
         });
         ro.observe(containerRef.current);
         containerRef.current._ro = ro;
 
-        // 커서 위치 기준 휠 줌
+        // 커서 위치 기준 휠 줌 (crosshair와 동일한 좌표계 사용)
         const onWheel = (e) => {
           if (!chartRef.current) return;
           e.preventDefault();
           const ts = chartRef.current.timeScale();
           const range = ts.getVisibleLogicalRange();
           if (!range) return;
-          const rect = containerRef.current.getBoundingClientRect();
-          const cursorLogical = ts.coordinateToLogical(e.clientX - rect.left);
+          const x = chartCursorX ?? (e.clientX - containerRef.current.getBoundingClientRect().left);
+          const cursorLogical = ts.coordinateToLogical(x);
           if (cursorLogical === null) return;
           const span = range.to - range.from;
           const ratio = Math.min(1, Math.max(0, (cursorLogical - range.from) / span));
