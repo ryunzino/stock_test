@@ -348,7 +348,7 @@ function CompareChart({ stocks }) {
           grid: { vertLines: { color: "#151520" }, horzLines: { color: "#151520" } },
           rightPriceScale: { borderColor: "#1a1a2a" },
           timeScale: { borderColor: "#1a1a2a", timeVisible: true, fixLeftEdge: false, fixRightEdge: false },
-          handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true },
+          handleScroll: { mouseWheel: false, pressedMouseMove: false, horzTouchDrag: true },
           handleScale: { mouseWheel: false, pinch: true, axisPressedMouseMove: true },
         });
         chartRef.current = chart;
@@ -439,6 +439,22 @@ function CompareChart({ stocks }) {
         const wrapper = wrapperRef.current;
         const onContextMenu = (e) => e.preventDefault();
         const onMouseDown = (e) => {
+          if (e.button === 0 && chartRef.current) {
+            // 좌클릭 팬 — 데이터 범위 초과 방지
+            e.preventDefault();
+            const ts = chartRef.current.timeScale();
+            const range = ts.getVisibleLogicalRange();
+            if (range) {
+              containerRef.current._panState = {
+                startX: e.clientX,
+                startRange: range,
+                span: range.to - range.from,
+                containerWidth: containerRef.current.clientWidth || 600,
+              };
+              containerRef.current.style.cursor = "grabbing";
+            }
+            return;
+          }
           if (e.button !== 2) return;
           e.preventDefault();
           const rect = containerRef.current.getBoundingClientRect();
@@ -448,6 +464,15 @@ function CompareChart({ stocks }) {
           });
         };
         const onMouseMove = (e) => {
+          // 좌클릭 팬
+          const pan = containerRef.current?._panState;
+          if (pan && chartRef.current) {
+            const dx = e.clientX - pan.startX;
+            const logicalDelta = -dx * (pan.span / pan.containerWidth);
+            const ts = chartRef.current.timeScale();
+            clampToData(ts, pan.startRange.from + logicalDelta, pan.startRange.to + logicalDelta);
+          }
+          // 우클릭 드래그 선택박스
           if (!dragRef.current || !selectionRef.current) return;
           const rect = containerRef.current.getBoundingClientRect();
           const curX = e.clientX - rect.left, curY = e.clientY - rect.top;
@@ -458,6 +483,11 @@ function CompareChart({ stocks }) {
           });
         };
         const onMouseUp = (e) => {
+          if (e.button === 0) {
+            containerRef.current._panState = null;
+            if (containerRef.current) containerRef.current.style.cursor = "grab";
+            return;
+          }
           if (!dragRef.current) return;
           if (e.button === 2 && chartRef.current) {
             const rect = containerRef.current.getBoundingClientRect();
@@ -525,7 +555,7 @@ function CompareChart({ stocks }) {
           ⚠ 데이터 로드 실패 — 잠시 후 다시 시도하세요
         </div>
       )}
-      <div ref={containerRef} style={{height:500,visibility:status==="ready"?"visible":"hidden"}} />
+      <div ref={containerRef} style={{height:500,visibility:status==="ready"?"visible":"hidden",cursor:"grab"}} />
       <div ref={selectionRef} style={{display:"none",position:"absolute",top:0,left:0,width:0,height:0,background:"rgba(74,158,255,0.12)",border:"1px solid rgba(74,158,255,0.5)",pointerEvents:"none",zIndex:5}} />
       {status === "ready" && (
         <div style={{display:"flex",gap:12,padding:"6px 12px",borderTop:"1px solid #1a1a2a",background:"#0a0a0f"}}>
