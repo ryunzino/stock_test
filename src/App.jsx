@@ -505,6 +505,7 @@ function CompareChart({ stocks }) {
         const onContextMenu = (e) => e.preventDefault();
         const onMouseDown = (e) => {
           if (e.button === 0 && chartRef.current) {
+            if (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON") return;
             // 좌클릭 팬 — 데이터 범위 초과 방지
             e.preventDefault();
             const ts = chartRef.current.timeScale();
