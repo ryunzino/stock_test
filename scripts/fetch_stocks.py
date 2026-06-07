@@ -97,6 +97,7 @@ for ticker, yahoo_sym in yahoo_map.items():
         print(f"  skip {ticker} ({yahoo_sym}): not in result")
         continue
     series = closes[yahoo_sym].dropna()
+    series = series[series > 0]  # 상장 이전 0값 제거
     if len(series) == 0:
         continue
     data[ticker] = [
