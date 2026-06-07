@@ -366,8 +366,8 @@ function CompareChart({ stocks }) {
         // y=0 기준선
         seriesListRef.current[0]?.createPriceLine({
           price: 0,
-          color: "rgba(255,255,255,0.55)",
-          lineWidth: 1,
+          color: "rgba(255,255,255,0.6)",
+          lineWidth: 2,
           lineStyle: LineStyle.Dashed,
           axisLabelVisible: false,
         });
