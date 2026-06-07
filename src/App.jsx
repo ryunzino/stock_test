@@ -371,7 +371,8 @@ function CompareChart({ stocks }) {
         containerRef.current._ro = ro;
 
         const resetYScale = () => {
-          seriesListRef.current.forEach(s => s.applyOptions({ autoscaleInfoProvider: () => null }));
+          seriesListRef.current.forEach(s => s.applyOptions({ autoscaleInfoProvider: (original) => original() }));
+          chartRef.current?.priceScale("right").applyOptions({ autoScale: true });
         };
         const handleKey = (e) => {
           if (!chartRef.current) return;
