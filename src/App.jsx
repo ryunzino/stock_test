@@ -34,6 +34,7 @@ const VERDICT_GROUPS = (() => {
 })();
 
 const COMPARE_COLORS = ["#4a9eff","#ff6b6b","#ffd700","#a855f7","#00ff88"];
+const RANGE_PRESETS = [["1M",1],["3M",3],["6M",6],["1Y",12],["3Y",36],["5Y",60],["전체",null]];
 
 function MetricGrid({ items, color }) {
   return (
@@ -321,7 +322,11 @@ function CompareChart({ stocks }) {
   const selectionRef = useRef(null);
   const dragRef = useRef(null);
   const seriesListRef = useRef([]);
+  const rawDataRef = useRef([]);
+  const applyRangeRef = useRef(null);
   const [status, setStatus] = useState("loading");
+  const [rangeLabel, setRangeLabel] = useState("전체");
+  const [rangePct, setRangePct] = useState([]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -337,6 +342,7 @@ function CompareChart({ stocks }) {
       });
 
     seriesListRef.current = [];
+    rawDataRef.current = [];
     Promise.all(stocks.map(s => fetchStock(s.ticker)))
       .then(allData => {
         if (cancelled || !containerRef.current) return;
@@ -353,13 +359,12 @@ function CompareChart({ stocks }) {
         });
         chartRef.current = chart;
 
+        rawDataRef.current = allData;
         allData.forEach((data, i) => {
-          const base = data[0]?.value || 1;
           const series = chart.addLineSeries({
             color: COMPARE_COLORS[i], lineWidth: 2, title: stocks[i].ticker,
             priceFormat: { type: "custom", formatter: p => p.toFixed(1) + "%", minMove: 0.01 },
           });
-          series.setData(data.map(d => ({ time: d.time, value: +((d.value / base - 1) * 100).toFixed(2) })));
           seriesListRef.current.push(series);
         });
 
@@ -372,13 +377,38 @@ function CompareChart({ stocks }) {
           axisLabelVisible: false,
         });
 
-        chart.timeScale().fitContent();
-        // 전체 데이터 범위: requestAnimationFrame으로 fitContent 완전 반영 후 캡처
-        requestAnimationFrame(() => {
-          if (!chartRef.current || !containerRef.current) return;
-          const r = chartRef.current.timeScale().getVisibleLogicalRange();
-          if (r) containerRef.current._dataRange = r;
-        });
+        // 기간 선택 후 데이터 재정규화 & 차트 범위 업데이트
+        const applyRange = (months) => {
+          if (!chartRef.current) return;
+          const ts = chartRef.current.timeScale();
+          const latestTime = Math.max(...rawDataRef.current.map(d => d[d.length - 1]?.time ?? 0));
+          const fromTime = months ? (() => {
+            const d = new Date(latestTime * 1000);
+            d.setMonth(d.getMonth() - months);
+            return Math.floor(d.getTime() / 1000);
+          })() : null;
+
+          const newPct = [];
+          rawDataRef.current.forEach((rawData, i) => {
+            const series = seriesListRef.current[i];
+            if (!series) { newPct.push(null); return; }
+            const filtered = fromTime ? rawData.filter(d => d.time >= fromTime) : rawData;
+            if (!filtered.length) { newPct.push(null); return; }
+            const base = filtered[0].value || 1;
+            series.setData(filtered.map(d => ({ time: d.time, value: +((d.value / base - 1) * 100).toFixed(2) })));
+            newPct.push(+((filtered[filtered.length - 1].value / base - 1) * 100).toFixed(1));
+          });
+          setRangePct(newPct);
+          setRangeLabel(RANGE_PRESETS.find(([, m]) => m === months)?.[0] ?? "전체");
+          ts.fitContent();
+          requestAnimationFrame(() => {
+            if (!chartRef.current || !containerRef.current) return;
+            const r = chartRef.current.timeScale().getVisibleLogicalRange();
+            if (r) containerRef.current._dataRange = r;
+          });
+        };
+        applyRangeRef.current = applyRange;
+        applyRange(null);
 
         // 범위를 데이터 경계 안으로 제한하는 헬퍼
         const clampToData = (ts, from, to) => {
@@ -561,6 +591,34 @@ function CompareChart({ stocks }) {
       {status === "error" && (
         <div style={{height:500,display:"flex",alignItems:"center",justifyContent:"center",color:"#ff6666",fontSize:11}}>
           ⚠ 데이터 로드 실패 — 잠시 후 다시 시도하세요
+        </div>
+      )}
+      {status === "ready" && (
+        <div style={{display:"flex",alignItems:"center",gap:6,padding:"7px 12px",borderBottom:"1px solid #1a1a2a",flexWrap:"wrap"}}>
+          <div style={{display:"flex",gap:4}}>
+            {RANGE_PRESETS.map(([label, months]) => (
+              <button key={label} onClick={() => applyRangeRef.current?.(months)} style={{
+                background: rangeLabel === label ? "#1e2a4a" : "transparent",
+                color: rangeLabel === label ? "#4a9eff" : "#555",
+                border: `1px solid ${rangeLabel === label ? "#4a9eff55" : "#1e1e2e"}`,
+                borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer",
+              }}>{label}</button>
+            ))}
+          </div>
+          <div style={{display:"flex",gap:14,marginLeft:"auto",flexWrap:"wrap"}}>
+            {stocks.map((s, i) => {
+              const pct = rangePct[i];
+              if (pct == null) return null;
+              const c = pct >= 0 ? "#00cc66" : "#ff4444";
+              return (
+                <div key={s.ticker} style={{display:"flex",gap:5,alignItems:"center"}}>
+                  <span style={{width:8,height:8,borderRadius:"50%",background:COMPARE_COLORS[i],display:"inline-block",flexShrink:0}} />
+                  <span style={{fontSize:11,color:COMPARE_COLORS[i],fontWeight:700}}>{s.ticker}</span>
+                  <span style={{fontSize:12,color:c,fontWeight:700}}>{pct>=0?"+":""}{pct}%</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
       <div ref={containerRef} style={{height:500,visibility:status==="ready"?"visible":"hidden",cursor:"grab"}} />
