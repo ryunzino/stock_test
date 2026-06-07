@@ -333,7 +333,7 @@ function CompareChart({ stocks }) {
       loadStockData().then(data => {
         const raw = data[ticker];
         if (!raw?.length) throw new Error(`No data: ${ticker}`);
-        return raw.sort((a, b) => a.time - b.time);
+        return raw.filter(d => d.value > 0).sort((a, b) => a.time - b.time);
       });
 
     seriesListRef.current = [];
