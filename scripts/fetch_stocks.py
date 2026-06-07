@@ -83,7 +83,7 @@ yahoo_syms = list(set(yahoo_map.values()))
 
 print(f"Downloading {len(yahoo_syms)} symbols from Yahoo Finance...")
 try:
-    hist = yf.download(yahoo_syms, period="1y", interval="1wk",
+    hist = yf.download(yahoo_syms, period="5y", interval="1wk",
                        progress=False, auto_adjust=True, threads=True)
 except Exception as e:
     print(f"Download error: {e}", file=sys.stderr)
