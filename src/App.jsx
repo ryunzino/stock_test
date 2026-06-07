@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { createChart, ColorType } from "lightweight-charts";
+import { createChart, ColorType, LineStyle } from "lightweight-charts";
 import { TV_SYMBOL } from './data/symbols';
 import { TYPE, FIELDS } from './data/fields';
 import { ANALYSIS } from './data/analysis';
@@ -361,6 +361,15 @@ function CompareChart({ stocks }) {
           });
           series.setData(data.map(d => ({ time: d.time, value: +((d.value / base - 1) * 100).toFixed(2) })));
           seriesListRef.current.push(series);
+        });
+
+        // y=0 기준선
+        seriesListRef.current[0]?.createPriceLine({
+          price: 0,
+          color: "rgba(255,255,255,0.25)",
+          lineWidth: 1,
+          lineStyle: LineStyle.Dashed,
+          axisLabelVisible: false,
         });
 
         chart.timeScale().fitContent();
