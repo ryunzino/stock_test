@@ -118,7 +118,7 @@ function NewsPanel({ ticker, name }) {
   useEffect(() => {
     if (!apiKey || fetched === ticker) return;
     fetchNews();
-  },[ticker]);
+  },[ticker, apiKey]);
   if (!apiKey) return (
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 20px",gap:"12px",textAlign:"center"}}>
       <div style={{fontSize:"32px"}}>🔧</div>

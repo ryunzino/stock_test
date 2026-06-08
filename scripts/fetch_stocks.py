@@ -111,7 +111,11 @@ for ticker, yahoo_sym in yahoo_map.items():
         for t, v in series.items()
     ]
 
-print(f"Fetched {len(data)}/{len(yahoo_map)} tickers OK")
+success_rate = len(data) / len(yahoo_map)
+print(f"Fetched {len(data)}/{len(yahoo_map)} tickers OK ({success_rate:.0%})")
+if success_rate < 0.90:
+    print(f"ERROR: 성공률 {success_rate:.0%} < 90% 임계값. 빌드를 중단합니다.", file=sys.stderr)
+    sys.exit(1)
 
 os.makedirs("public", exist_ok=True)
 with open("public/stockdata.json", "w") as f:
