@@ -28,7 +28,6 @@ jobs:
           python-version: '3.11'
       - run: pip install yfinance pandas
       - run: python scripts/fetch_stocks.py
-      - run: python scripts/patch_battery.py
       - run: npm install
       - run: npm run build
         env:
