@@ -395,6 +395,48 @@ export const FIELDS = {
        ]},
     ]
   },
+  battery:{
+    id:"battery", label:"2차전지 & EV", emoji:"🔋",
+    fieldBottleneck:{
+      sector:"리튬·양극재 공급망 & 고체전지 전환",
+      reason:"전기차·에너지저장장치(ESS) 확산의 근본 제약은 리튬·코발트·니켈 공급과 배터리 에너지밀도다. 광산→소재→셀 전 구간의 공급망을 장악한 기업이 EV 전환 사이클의 진짜 수혜자다."
+    },
+    sectors:[
+      {id:"lithium", name:"리튬 채굴 & 소재", emoji:"⛏️", isFieldBottleneck:true,
+       bottleneck:"고순도 리튬 공급 & 정제 기술",
+       bottleneckDetail:"배터리 핵심 원자재 리튬의 글로벌 공급은 칠레·호주 등 소수 지역에 집중. 리튬 정제 기술과 ESG 채굴 비용이 진입장벽. 수요 폭증 시 공급 병목이 즉각 가격에 반영.",
+       stocks:[
+         {ticker:"ALB", name:"Albemarle", exchange:"NYSE", role:"글로벌 리튬 생산 1위 — 칠레·호주 광산 장악", note:"리튬 가격 하락 역풍, 장기 공급계약 포트폴리오로 방어", type:"bottleneck"},
+         {ticker:"SQM", name:"SQM", exchange:"NYSE", role:"아타카마 리튬 브라인 저비용 1위 생산자", note:"칠레 정부 파트너십 불확실성, 저비용 구조가 핵심 해자", type:"share"},
+         {ticker:"LAC", name:"Lithium Americas", exchange:"NYSE", role:"북미 최대 미개발 리튬 광산(Thacker Pass) 보유", note:"생산 개시 전 고위험 개발주 — GM 전략적 투자 유치", type:"emerging"},
+       ]},
+      {id:"koreanBattery", name:"한국 배터리 셀·소재", emoji:"🇰🇷", isFieldBottleneck:true,
+       bottleneck:"하이니켈 양극재 & 각형·파우치 셀 기술",
+       bottleneckDetail:"삼성SDI·LGES가 파나소닉·CATL과 함께 글로벌 프리미엄 EV 배터리 과점. 에코프로비엠·포스코퓨처엠·엘앤에프는 하이니켈 양극재 기술로 한국 공급망의 핵심 병목을 형성.",
+       stocks:[
+         {ticker:"006400", name:"삼성SDI", exchange:"KRX", role:"PRiMX 각형·파우치·원통형 전방위 배터리 — BMW·Stellantis 핵심 공급", note:"전고체 2027년 양산 목표, PRiMX 46파이 원통형 확장", type:"bottleneck"},
+         {ticker:"373220", name:"LG에너지솔루션", exchange:"KRX", role:"파우치 배터리 글로벌 2위 — GM Ultium·테슬라 공급", note:"북미 합작공장 7개 건설 중, IRA 보조금 직접 수혜", type:"share"},
+         {ticker:"247540", name:"에코프로비엠", exchange:"KRX", role:"하이니켈 NCA 양극재 1위 — 삼성SDI 전량 공급", note:"하이니켈 점유율 국내 1위, 2026 캐파 확장 계획", type:"bottleneck"},
+         {ticker:"003670", name:"POSCO퓨처엠", exchange:"KRX", role:"양극재·음극재 동시 생산 — POSCO 원자재 수직통합", note:"리튬·니켈 모회사 수직통합, 양음극재 동시 확장", type:"share"},
+         {ticker:"066970", name:"엘앤에프", exchange:"KRX", role:"하이니켈 NCMA 양극재 — 테슬라·LG에너지솔루션 공급", note:"테슬라 NCMA 공급, 차세대 양극재 기술 전환 중", type:"share"},
+       ]},
+      {id:"solidState", name:"고체전지 & 차세대 배터리", emoji:"🔬", isFieldBottleneck:false,
+       bottleneck:"고체 전해질 이온 전도도 & 계면 저항",
+       bottleneckDetail:"고체전지는 에너지밀도·안전성에서 리튬이온 대비 혁신적이나, 고체 전해질 이온 전도도와 셀 계면 저항 해결이 상업화 관문. 2027~2030 양산을 목표로 삼성SDI·도요타·QuantumScape가 경쟁 중.",
+       stocks:[
+         {ticker:"QS", name:"QuantumScape", exchange:"NYSE", role:"고체 전해질 리튬메탈 배터리 선도 스타트업 — 폭스바겐 투자", note:"B 샘플 승인, 2026~2027 QS-0 파일럿 라인 양산 목표", type:"emerging"},
+         {ticker:"SLDP", name:"Solid Power", exchange:"NASDAQ", role:"황화물계 고체전지 — BMW·Ford 전략적 파트너", note:"실리콘 음극 ASSB 시험 중, A 샘플 OEM 납품 완료", type:"emerging"},
+       ]},
+      {id:"evMakers", name:"EV 제조사", emoji:"🚗", isFieldBottleneck:false,
+       bottleneck:"배터리 자체 조달 & 소프트웨어 정의 차량(SDV)",
+       bottleneckDetail:"EV 원가의 40%를 차지하는 배터리를 자체 조달하거나 수직통합한 기업이 수익성을 확보한다. 동시에 OTA 업데이트·자율주행 수익화로 SDV 플랫폼 경쟁이 본격화.",
+       stocks:[
+         {ticker:"RIVN", name:"Rivian", exchange:"NASDAQ", role:"픽업트럭·SUV·상업용 밴 특화 미국 EV — Amazon 전략 파트너", note:"R2 2026 양산, Amazon EDV 10만대 계약, 흑자화 2027 목표", type:"emerging"},
+         {ticker:"LCID", name:"Lucid", exchange:"NASDAQ", role:"럭셔리 EV 초장거리 주행(EPA 516마일) — 사우디 PIF 대주주", note:"고효율 구동계 기술 라이선스 잠재, 생산 확대가 관건", type:"emerging"},
+         {ticker:"1211", name:"BYD", exchange:"HKEX", role:"글로벌 EV 판매 1위 — 배터리·반도체·차량 완전 수직통합", note:"2024 EV+PHEV 175만대, 테슬라 추월, 자체 칩 'e-platform 3.0'", type:"share"},
+       ]},
+    ]
+  },
   quantum:{
     id:"quantum", label:"양자 컴퓨팅", emoji:"⚛️",
     fieldBottleneck:{
