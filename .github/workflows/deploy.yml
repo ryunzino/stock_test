@@ -30,6 +30,8 @@ jobs:
         run: pip install yfinance pandas
       - name: Fetch stock data
         run: python scripts/fetch_stocks.py
+      - name: Generate signals
+        run: python scripts/generate_signals.py
       - name: Install Node dependencies
         run: npm install
       - name: Build
