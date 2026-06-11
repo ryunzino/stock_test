@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-analysis.js + fields.js를 파싱해 stock_auto가 읽을 public/signals.json 생성.
+analysis.js + fields.js + stockdata.json 을 파싱해
+stock_auto가 읽을 public/signals.json 생성.
 
-verdictColor → action/strength 매핑:
-  #00ff88 (초록)  → BUY         strength 0.9
-  #4a9eff (파랑)  → BUY         strength 0.7
-  #ffaa00 (주황)  → HOLD        strength 0.5
-  #a855f7 (보라)  → SPECULATIVE strength 0.3
-  #ff4444 (빨강)  → AVOID       strength 0.1
+strength 계산 (0.05~0.95):
+  기본점수 (verdictColor)
+  × type 계수  (bottleneck 1.0 / share 0.85 / emerging 0.70)
+  + 재무 보정  (PEG, 성장률, 부채, 영업마진, EPS)
+  + 모멘텀 보정 (최근 12주 수익률 분위)
 """
 import json
 import os
@@ -18,29 +18,87 @@ from datetime import datetime, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# verdictColor → (action, 기본점수)
 COLOR_MAP = {
-    "#00ff88": ("BUY",         0.9),
-    "#4a9eff": ("BUY",         0.7),
-    "#ffaa00": ("HOLD",        0.5),
-    "#a855f7": ("SPECULATIVE", 0.3),
-    "#ff4444": ("AVOID",       0.1),
+    "#00ff88": ("BUY",         0.85),
+    "#4a9eff": ("BUY",         0.65),
+    "#ffaa00": ("HOLD",        0.40),
+    "#a855f7": ("SPECULATIVE", 0.20),
+    "#ff4444": ("AVOID",       0.05),
 }
 
-# KRX 세부 시장 구분 (KOSPI / KOSDAQ)
+# type → 곱셈 계수
+TYPE_COEFF = {
+    "bottleneck": 1.00,
+    "share":      0.85,
+    "emerging":   0.70,
+}
+
 KRX_MARKET = {
-    "005930": "KOSPI",   # 삼성전자
-    "000660": "KOSPI",   # SK하이닉스
-    "000270": "KOSPI",   # 기아
-    "006400": "KOSPI",   # 삼성SDI
-    "373220": "KOSPI",   # LG에너지솔루션
-    "247540": "KOSDAQ",  # 에코프로비엠
-    "003670": "KOSPI",   # 포스코퓨처엠
-    "066970": "KOSDAQ",  # L&F
+    "005930": "KOSPI",
+    "000660": "KOSPI",
+    "000270": "KOSPI",
+    "006400": "KOSPI",
+    "373220": "KOSPI",
+    "247540": "KOSDAQ",
+    "003670": "KOSPI",
+    "066970": "KOSDAQ",
 }
 
 
-def parse_analysis(path: str) -> dict:
-    """analysis.js에서 ticker → {verdictColor, verdict} 추출."""
+# ── 재무 파싱 헬퍼 ────────────────────────────────────────
+
+def _avg_numbers(text):
+    """텍스트에서 부호 포함 숫자 추출 후 평균. 없으면 None."""
+    nums = re.findall(r'[+-]?\d+(?:\.\d+)?', text)
+    if not nums:
+        return None
+    return sum(float(n) for n in nums) / len(nums)
+
+
+def _parse_peg(block):
+    m = re.search(r'peg:\s*"([^"]+)"', block)
+    if not m:
+        return None
+    val = m.group(1).strip()
+    if val.upper() in ('N/A', '-', ''):
+        return None
+    nums = re.findall(r'\d+(?:\.\d+)?', val)
+    return float(nums[0]) if nums else None
+
+
+def _parse_revenue_yoy(block):
+    m = re.search(r'revenueYoy:\s*"([^"]+)"', block)
+    return _avg_numbers(m.group(1)) if m else None
+
+
+def _parse_debt_high(block):
+    m = re.search(r'debtRatio:\s*"([^"]+)"', block)
+    return bool(m) and "높음" in m.group(1)
+
+
+def _parse_operating_margin(block):
+    m = re.search(r'operatingMargin:\s*"([^"]+)"', block)
+    return _avg_numbers(m.group(1)) if m else None
+
+
+def _parse_eps_negative(block):
+    m = re.search(r'eps:\s*"([^"]+)"', block)
+    if not m:
+        return False
+    val = m.group(1)
+    if "적자" in val:
+        return True
+    if re.search(r'-[\$₩]?\d', val):   # -$0.5, -₩1,000 형태
+        return True
+    nums = re.findall(r'[+-]?\d+(?:\.\d+)?', val)
+    return bool(nums) and float(nums[0]) < 0
+
+
+# ── 메인 파싱 함수 ────────────────────────────────────────
+
+def parse_analysis(path):
+    """analysis.js → ticker: {verdictColor, verdict, 재무지표} 딕셔너리."""
     text = open(path, encoding="utf-8").read()
 
     ticker_re  = re.compile(r'"([A-Z0-9.]+)":\s*\{')
@@ -56,18 +114,24 @@ def parse_analysis(path: str) -> dict:
 
         verdict_m = verdict_re.search(block)
         color_m   = color_re.search(block)
+        if not (verdict_m and color_m):
+            continue
 
-        if verdict_m and color_m:
-            result[ticker] = {
-                "verdict":      verdict_m.group(1),
-                "verdictColor": color_m.group(1).lower(),
-            }
+        result[ticker] = {
+            "verdict":         verdict_m.group(1),
+            "verdictColor":    color_m.group(1).lower(),
+            "peg":             _parse_peg(block),
+            "revenueYoy":      _parse_revenue_yoy(block),
+            "debtHigh":        _parse_debt_high(block),
+            "operatingMargin": _parse_operating_margin(block),
+            "epsNegative":     _parse_eps_negative(block),
+        }
 
     return result
 
 
-def parse_fields(path: str) -> dict:
-    """fields.js에서 ticker → {exchange, type} 추출."""
+def parse_fields(path):
+    """fields.js → ticker: {exchange, type} 딕셔너리."""
     text = open(path, encoding="utf-8").read()
 
     ticker_re   = re.compile(r'ticker:"([^"]+)"')
@@ -77,28 +141,92 @@ def parse_fields(path: str) -> dict:
     result = {}
     for m in ticker_re.finditer(text):
         ticker = m.group(1)
-        if ticker in result:   # 중복 탭 등장 종목 — 첫 번째만 사용
+        if ticker in result:   # 복수 탭 중복 등장 — 첫 번째만 사용
             continue
-        # 해당 종목 항목 블록 (~400자)
         block = text[m.start(): m.start() + 400]
-        exchange_m = exchange_re.search(block)
-        type_m     = type_re.search(block)
-        if exchange_m and type_m:
-            result[ticker] = {
-                "exchange": exchange_m.group(1),
-                "type":     type_m.group(1),
-            }
+        ex_m = exchange_re.search(block)
+        ty_m = type_re.search(block)
+        if ex_m and ty_m:
+            result[ticker] = {"exchange": ex_m.group(1), "type": ty_m.group(1)}
 
     return result
 
 
-def resolve_market(exchange: str, ticker: str) -> str:
+def load_momentum(stockdata_path, weeks=12):
+    """stockdata.json → ticker: 최근 N주 수익률(%) 딕셔너리."""
+    if not os.path.exists(stockdata_path):
+        return {}
+
+    with open(stockdata_path, encoding="utf-8") as f:
+        data = json.load(f)
+
+    result = {}
+    for ticker, series in data.items():
+        if len(series) < weeks + 1:
+            continue
+        s = sorted(series, key=lambda d: d["time"])
+        base   = s[-(weeks + 1)]["value"]
+        latest = s[-1]["value"]
+        if base > 0:
+            result[ticker] = (latest - base) / base * 100
+
+    return result
+
+
+def _momentum_adj(ticker, momentum_map):
+    """상위 25% → +0.08 / 하위 25% → -0.08 / 나머지 → 0."""
+    if not momentum_map or ticker not in momentum_map:
+        return 0.0
+    vals = sorted(momentum_map.values())
+    n    = len(vals)
+    p25  = vals[n // 4]
+    p75  = vals[(3 * n) // 4]
+    pct  = momentum_map[ticker]
+    if pct >= p75:
+        return 0.08
+    if pct <= p25:
+        return -0.08
+    return 0.0
+
+
+def compute_strength(a, field_type, mom_adj):
+    """
+    strength = clamp(기본점수 × type계수 + 재무보정 + 모멘텀보정, 0.05, 0.95)
+    """
+    _, base  = COLOR_MAP.get(a["verdictColor"], ("HOLD", 0.40))
+    coeff    = TYPE_COEFF.get(field_type, 0.85)
+
+    fin = 0.0
+    # PEG < 1: 저평가 가점
+    if a["peg"] is not None and a["peg"] < 1.0:
+        fin += 0.05
+    # 매출 성장률 30%↑: 고성장 가점
+    if a["revenueYoy"] is not None and a["revenueYoy"] >= 30:
+        fin += 0.05
+    # 부채 높음: 감점
+    if a["debtHigh"]:
+        fin -= 0.05
+    # 영업마진 20%↑: 수익성 가점
+    if a["operatingMargin"] is not None and a["operatingMargin"] >= 20:
+        fin += 0.03
+    # 영업마진 음수: 감점
+    elif a["operatingMargin"] is not None and a["operatingMargin"] < 0:
+        fin -= 0.03
+    # EPS 적자: 감점
+    if a["epsNegative"]:
+        fin -= 0.03
+
+    raw = base * coeff + fin + mom_adj
+    return round(min(max(raw, 0.05), 0.95), 3)
+
+
+def resolve_market(exchange, ticker):
     if exchange == "KRX":
         return KRX_MARKET.get(ticker, "KOSPI")
     return exchange
 
 
-def build_signals(analysis: dict, fields: dict) -> list:
+def build_signals(analysis, fields, momentum_map):
     signals = []
 
     for ticker, meta in fields.items():
@@ -106,8 +234,10 @@ def build_signals(analysis: dict, fields: dict) -> list:
         if not a:
             continue
 
-        action, strength = COLOR_MAP.get(a["verdictColor"], ("HOLD", 0.5))
-        market = resolve_market(meta["exchange"], ticker)
+        action, _ = COLOR_MAP.get(a["verdictColor"], ("HOLD", 0.40))
+        mom_adj   = _momentum_adj(ticker, momentum_map)
+        strength  = compute_strength(a, meta["type"], mom_adj)
+        market    = resolve_market(meta["exchange"], ticker)
 
         signals.append({
             "symbol":   ticker,
@@ -117,15 +247,15 @@ def build_signals(analysis: dict, fields: dict) -> list:
             "reason":   a["verdict"],
         })
 
-    # strength 내림차순 정렬 (BUY 0.9 먼저)
     signals.sort(key=lambda x: -x["strength"])
     return signals
 
 
 def main():
-    analysis_path = os.path.join(ROOT, "src", "data", "analysis.js")
-    fields_path   = os.path.join(ROOT, "src", "data", "fields.js")
-    output_path   = os.path.join(ROOT, "public", "signals.json")
+    analysis_path  = os.path.join(ROOT, "src", "data", "analysis.js")
+    fields_path    = os.path.join(ROOT, "src", "data", "fields.js")
+    stockdata_path = os.path.join(ROOT, "public", "stockdata.json")
+    output_path    = os.path.join(ROOT, "public", "signals.json")
 
     for p in (analysis_path, fields_path):
         if not os.path.exists(p):
@@ -140,7 +270,14 @@ def main():
     fields = parse_fields(fields_path)
     print(f"  → {len(fields)}개 티커 종목 메타데이터 확인")
 
-    signals = build_signals(analysis, fields)
+    print("Loading momentum (stockdata.json) ...")
+    momentum_map = load_momentum(stockdata_path)
+    if momentum_map:
+        print(f"  → {len(momentum_map)}개 티커 모멘텀 계산 완료")
+    else:
+        print("  → stockdata.json 없음 — 모멘텀 보정 미적용")
+
+    signals = build_signals(analysis, fields, momentum_map)
     print(f"  → {len(signals)}개 신호 생성")
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -156,6 +293,10 @@ def main():
     counts = Counter(s["action"] for s in signals)
     for action in ("BUY", "HOLD", "SPECULATIVE", "AVOID"):
         print(f"  {action:<12}: {counts.get(action, 0)}개")
+
+    print("\n--- strength 상위 5개 ---")
+    for s in signals[:5]:
+        print(f"  {s['symbol']:<12} {s['action']:<12} {s['strength']:.3f}  {s['reason']}")
 
 
 if __name__ == "__main__":
